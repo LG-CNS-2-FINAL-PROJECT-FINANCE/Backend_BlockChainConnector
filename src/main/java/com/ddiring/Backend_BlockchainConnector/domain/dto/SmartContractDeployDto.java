@@ -6,10 +6,10 @@ import lombok.Getter;
 @Getter
 public class SmartContractDeployDto {
     @NotBlank(message="조각 투자 상품명을 입력하시오.")
-    private String name;
+    private String tokenName;
 
     @NotBlank(message = "조각 투자 심볼을 입력하시오.")
-    private String symbol;
+    private String tokenSymbol;
 
     @NotBlank(message = "조각 투자 상품의 목표 금액을 입력하시오.")
     private Long totalGoalAmount;
