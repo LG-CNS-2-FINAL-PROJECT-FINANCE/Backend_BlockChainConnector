@@ -1,3 +1,10 @@
 spring:
   application:
     name: Backend_BlockchainConnector
+
+jenkins:
+  url: ${JENKINS_URL}
+  job: ${JENKINS_JOB}
+  username: ${JENKINS_USERNAME}
+  api-token: ${JENKINS_API_TOKEN}
+  authentication-token: ${JENKINS_AUTHENTICATION_TOKEN}
