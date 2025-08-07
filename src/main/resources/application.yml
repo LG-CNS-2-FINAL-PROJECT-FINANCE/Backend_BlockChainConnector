@@ -12,7 +12,7 @@ jenkins:
 blockchain:
   admin:
     key:
-      private: ${PRIVATE_KEY_ADMIN}
+      private-key: ${PRIVATE_KEY_ADMIN}
   sepolia:
     rpc:
       url: ${SEPOLIA_RPC_URL}

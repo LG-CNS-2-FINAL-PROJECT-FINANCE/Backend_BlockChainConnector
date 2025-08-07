@@ -1,11 +1,13 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
+import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.SolidityFunctionWrapperDto;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +21,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.gas.DynamicGasProvider;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -29,16 +32,8 @@ import java.util.Map;
 public class SmartContractService {
     private final RestTemplate restTemplate;
 
-    @Value("${jenkins.url}")
-    private String jenkinsUrl;
-    @Value("${jenkins.username}")
-    private String jenkinsUsername;
-    @Value("${jenkins.api-token}")
-    private String jenkinsApiToken;
-    @Value("${jenkins.authentication-token}")
-    private String jenkinsAuthenticationToken;
-    @Value("${jenkins.job}")
-    private String jenkinsJob;
+    private final JenkinsProperties jenkinsProperties;
+    private final BlockchainProperties blockchainProperties;
 
     public void triggerDeploymentPipeline(SmartContractDeployDto deployDto) {
         String clumbKey;
@@ -46,7 +41,7 @@ public class SmartContractService {
         String authHeader;
 
         try {
-            String auth = jenkinsUsername + ":" + jenkinsApiToken;
+            String auth = jenkinsProperties.getUsername() + ":" + jenkinsProperties.getApiToken();
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
             authHeader = "Basic " + new String(encodedAuth);
 
@@ -54,7 +49,7 @@ public class SmartContractService {
             authHeaders.set("Authorization", authHeader);
             HttpEntity<String> authEntity = new HttpEntity<>(authHeaders);
 
-            String jenkinsClumbApiUrl = String.format("http://%s/crumbIssuer/api/json", jenkinsUrl);
+            String jenkinsClumbApiUrl = String.format("http://%s/crumbIssuer/api/json", jenkinsProperties.getUrl());
             ResponseEntity<Map> clumbResponse = restTemplate.exchange(jenkinsClumbApiUrl, org.springframework.http.HttpMethod.GET, authEntity, Map.class);
 
             clumbKey = clumbResponse.getBody().get("crumbRequestField").toString();
@@ -67,7 +62,7 @@ public class SmartContractService {
         }
 
         try {
-            String jenkinsApiUrl = String.format("http://%s%s/buildWithParameters", jenkinsUrl, jenkinsJob);
+            String jenkinsApiUrl = String.format("http://%s%s/buildWithParameters", jenkinsProperties.getUrl(), jenkinsProperties.getJob());
 
             HttpHeaders postHeaders = new HttpHeaders();
             postHeaders.add("Authorization", authHeader);
@@ -75,7 +70,7 @@ public class SmartContractService {
             postHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("token", jenkinsAuthenticationToken);
+            parameters.add("token", jenkinsProperties.getAuthenticationToken());
             parameters.add("TOKEN_NAME", deployDto.getTokenName());
             parameters.add("TOKEN_SYMBOL", deployDto.getTokenSymbol());
             parameters.add("TOTAL_GOAL_AMOUNT", deployDto.getTotalGoalAmount().toString());
@@ -92,6 +87,22 @@ public class SmartContractService {
             throw new RuntimeException("Jenkins 파이프라인 요청 중 오류 발생", e);
         }
     }
+
+    private SolidityFunctionWrapperDto setupSoldityFunctionWrapper() {
+        try {
+            Web3j web3j = Web3j.build(new HttpService(blockchainProperties.getSepolia().getRpc().getUrl()));
+            Credentials credentials = Credentials.create(blockchainProperties.getAdmin().getKey().getPrivateKey());
+            DynamicGasProvider gasProvider = new DynamicGasProvider(web3j);
+            return SolidityFunctionWrapperDto.builder()
+                    .web3j(web3j)
+                    .credentials(credentials)
+                    .gasProvider(gasProvider)
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Web3j 설정 실패 : " + e);
+        }
+    }
+
     public void investment(InvestmentDto investmentDto) {
         try {
             SolidityFunctionWrapperDto solidityFunctionWrapperDto = setupSoldityFunctionWrapper();
