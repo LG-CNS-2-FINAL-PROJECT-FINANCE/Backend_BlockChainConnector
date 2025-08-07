@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.api.open;
 
 import com.ddiring.Backend_BlockchainConnector.common.dto.ApiResponseDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployResultDto;
 import com.ddiring.Backend_BlockchainConnector.service.SmartContractService;
@@ -39,9 +40,10 @@ public class SmartContractController {
     }
 
     @PostMapping(value = "/investment")
-    public ApiResponseDto<?> transferToken() {
+    public ApiResponseDto<?> transferToken(@RequestBody @Valid InvestmentDto investmentDto) {
+        smartContractService.investment(investmentDto);
 
-        return ApiResponseDto.defaultOK();
+        return ApiResponseDto.createOK("투자 요청이 완료되었습니다.");
     }
 
     @GetMapping(value = "/balance")
