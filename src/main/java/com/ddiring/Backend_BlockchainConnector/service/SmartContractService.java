@@ -1,6 +1,8 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
+import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.gas.DynamicGasProvider;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -84,6 +90,17 @@ public class SmartContractService {
         } catch (RuntimeException e) {
             log.warn("Jenkins 배포 요청 실패: " + e.getMessage());
             throw new RuntimeException("Jenkins 파이프라인 요청 중 오류 발생", e);
+        }
+    }
+    public void investment(InvestmentDto investmentDto) {
+        try {
+            SolidityFunctionWrapperDto solidityFunctionWrapperDto = setupSoldityFunctionWrapper();
+
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(investmentDto.getSmartContractAddress(), solidityFunctionWrapperDto.getWeb3j(), solidityFunctionWrapperDto.getCredentials(), solidityFunctionWrapperDto.getGasProvider());
+
+            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
+        } catch (Exception e) {
+            throw new RuntimeException("투자 - 토큰 할당 요청 실패", e);
         }
     }
 }

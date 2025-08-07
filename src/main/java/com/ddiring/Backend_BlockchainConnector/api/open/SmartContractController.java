@@ -39,9 +39,10 @@ public class SmartContractController {
     }
 
     @PostMapping(value = "/investment")
-    public ApiResponseDto<?> transferToken() {
+    public ApiResponseDto<?> transferToken(@RequestBody @Valid InvestmentDto investmentDto) {
+        smartContractService.investment(investmentDto);
 
-        return ApiResponseDto.defaultOK();
+        return ApiResponseDto.createOK("투자 요청이 완료되었습니다.");
     }
 
     @GetMapping(value = "/balance")
