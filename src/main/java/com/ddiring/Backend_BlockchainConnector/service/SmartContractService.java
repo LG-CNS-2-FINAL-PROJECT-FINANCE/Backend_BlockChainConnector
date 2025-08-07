@@ -1,7 +1,6 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
-import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
-import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.BalanceDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SolidityFunctionWrapperDto;
@@ -111,7 +110,23 @@ public class SmartContractService {
 
             smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
         } catch (Exception e) {
-            throw new RuntimeException("투자 - 토큰 할당 요청 실패", e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
+        try {
+            SolidityFunctionWrapperDto solidityFunctionWrapperDto = setupSoldityFunctionWrapper();
+
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(balanceDto.getSmartContractAddress(), solidityFunctionWrapperDto.getWeb3j(), solidityFunctionWrapperDto.getCredentials(), solidityFunctionWrapperDto.getGasProvider());
+
+            BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
+            BigInteger divisor = new BigInteger("1000000000000000000"); // 10의 18제곱
+            Long tokenAmountDecimal = tokenAmountWei.divide(divisor).longValue();
+
+            return BalanceDto.Response.builder().tokenAmount(tokenAmountDecimal).build();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

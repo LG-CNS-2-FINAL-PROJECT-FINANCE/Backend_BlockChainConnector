@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.api.open;
 
 import com.ddiring.Backend_BlockchainConnector.common.dto.ApiResponseDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.BalanceDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployResultDto;
@@ -47,8 +48,9 @@ public class SmartContractController {
     }
 
     @GetMapping(value = "/balance")
-    public ApiResponseDto<?> getBalance() {
+    public ApiResponseDto<?> getBalance(@ModelAttribute @Valid BalanceDto.Request balanceDto) {
+        BalanceDto.Response response = smartContractService.getBalance(balanceDto);
 
-        return ApiResponseDto.defaultOK();
+        return ApiResponseDto.createOK(response);
     }
 }
