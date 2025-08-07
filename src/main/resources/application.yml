@@ -8,3 +8,14 @@ jenkins:
   username: ${JENKINS_USERNAME}
   api-token: ${JENKINS_API_TOKEN}
   authentication-token: ${JENKINS_AUTHENTICATION_TOKEN}
+
+blockchain:
+  admin:
+    key:
+      private: ${PRIVATE_KEY_ADMIN}
+  sepolia:
+    rpc:
+      url: ${SEPOLIA_RPC_URL}
+  etherscan:
+    api:
+      key: ${ETHERSCAN_API_KEY}
