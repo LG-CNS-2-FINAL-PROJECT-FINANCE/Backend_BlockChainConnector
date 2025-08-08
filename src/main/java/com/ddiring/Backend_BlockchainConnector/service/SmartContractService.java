@@ -71,20 +71,26 @@ public class SmartContractService {
     }
 
     public void postDeployProcess(SmartContractDeployResultDto resultDto) {
-        if (!"success".equals(resultDto.getResult())) {
-            log.warn("토큰 등록 실패");
-            throw new RuntimeException("토큰 등록 실패");
-        }
+        try {
+            if (!"success".equals(resultDto.getStatus())) {
+                log.warn("토큰 등록 실패");
+                throw new RuntimeException("토큰 등록 실패");
+            }
 
-        ResponseEntity<Void> response = remoteProductService.setContractAddress(
-                UpdateContractAddressDto.builder()
-                        .projectId(resultDto.getProjectId())
-                        .smartContractAddress(resultDto.getAddress())
-                        .build()
-        );
+            ResponseEntity<Void> response = remoteProductService.setContractAddress(
+                    UpdateContractAddressDto.builder()
+                            .projectId(resultDto.getProjectId())
+                            .smartContractAddress(resultDto.getAddress())
+                            .build()
+            );
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Product Service 스마트 컨트랙트 주소 업데이트 실패");
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.warn("Product Service 스마트 컨트랙트 주소 업데이트 실패");
+
+                throw new RuntimeException("Product Service 스마트 컨트랙트 주소 업데이트 실패");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
@@ -109,7 +115,7 @@ public class SmartContractService {
 
             FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(investmentDto.getSmartContractAddress(), contractWrapperDto.getWeb3j(), contractWrapperDto.getCredentials(), contractWrapperDto.getGasProvider());
 
-            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).send();
+            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
