@@ -10,6 +10,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SmartContractDeployDto {
+    @NotBlank(message = "조각 투자 상품 아이디를 입력하시오.")
+    private String projectId;
+
     @NotBlank(message="조각 투자 상품명을 입력하시오.")
     private String tokenName;
 
