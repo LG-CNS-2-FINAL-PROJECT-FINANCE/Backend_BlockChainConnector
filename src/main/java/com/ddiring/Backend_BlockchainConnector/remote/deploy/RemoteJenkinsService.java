@@ -16,7 +16,7 @@ public interface RemoteJenkinsService {
     @GetMapping(value = "/crumbIssuer/api/json")
     Map<String, String> getClumb(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader);
 
-    @PostMapping(value = "/${jenkins.job}/buildWithParameters")
+    @PostMapping(value = "/${jenkins.job}/buildWithParameters", consumes = "application/x-www-form-urlencoded")
     ResponseEntity<Void> requestSmartContractDeploy(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader,
             @RequestHeader("Jenkins-Crumb") String crumbValue,
