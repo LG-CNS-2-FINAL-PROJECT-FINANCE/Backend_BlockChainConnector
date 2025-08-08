@@ -1,6 +1,5 @@
-spring:
-  application:
-    name: Backend_BlockchainConnector
+server:
+  port: 8080
 
 jenkins:
   url: ${JENKINS_URL}
