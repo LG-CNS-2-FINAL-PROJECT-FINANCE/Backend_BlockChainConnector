@@ -4,6 +4,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.dto.BalanceDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.SolidityFunctionWrapperDto;
+import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapperDto;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,12 +88,12 @@ public class SmartContractService {
         }
     }
 
-    private SolidityFunctionWrapperDto setupSoldityFunctionWrapper() {
+    private ContractWrapperDto setupContractWrapper() {
         try {
             Web3j web3j = Web3j.build(new HttpService(blockchainProperties.getSepolia().getRpc().getUrl()));
             Credentials credentials = Credentials.create(blockchainProperties.getAdmin().getKey().getPrivateKey());
             DynamicGasProvider gasProvider = new DynamicGasProvider(web3j);
-            return SolidityFunctionWrapperDto.builder()
+            return ContractWrapperDto.builder()
                     .web3j(web3j)
                     .credentials(credentials)
                     .gasProvider(gasProvider)
@@ -104,11 +105,11 @@ public class SmartContractService {
 
     public void investment(InvestmentDto investmentDto) {
         try {
-            SolidityFunctionWrapperDto solidityFunctionWrapperDto = setupSoldityFunctionWrapper();
+            ContractWrapperDto contractWrapperDto = setupContractWrapper();
 
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(investmentDto.getSmartContractAddress(), solidityFunctionWrapperDto.getWeb3j(), solidityFunctionWrapperDto.getCredentials(), solidityFunctionWrapperDto.getGasProvider());
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(investmentDto.getSmartContractAddress(), contractWrapperDto.getWeb3j(), contractWrapperDto.getCredentials(), contractWrapperDto.getGasProvider());
 
-            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
+            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).send();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -116,9 +117,9 @@ public class SmartContractService {
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
         try {
-            SolidityFunctionWrapperDto solidityFunctionWrapperDto = setupSoldityFunctionWrapper();
+            ContractWrapperDto contractWrapperDto = setupContractWrapper();
 
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(balanceDto.getSmartContractAddress(), solidityFunctionWrapperDto.getWeb3j(), solidityFunctionWrapperDto.getCredentials(), solidityFunctionWrapperDto.getGasProvider());
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(balanceDto.getSmartContractAddress(), contractWrapperDto.getWeb3j(), contractWrapperDto.getCredentials(), contractWrapperDto.getGasProvider());
 
             BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
             BigInteger divisor = new BigInteger("1000000000000000000"); // 10의 18제곱
