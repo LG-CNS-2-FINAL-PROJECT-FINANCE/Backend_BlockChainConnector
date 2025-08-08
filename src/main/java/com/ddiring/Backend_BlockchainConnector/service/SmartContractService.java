@@ -1,21 +1,15 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
-import com.ddiring.Backend_BlockchainConnector.domain.dto.BalanceDto;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.InvestmentDto;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.SmartContractDeployDto;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.SolidityFunctionWrapperDto;
+import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
+import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
+import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapperDto;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
@@ -30,14 +24,13 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class SmartContractService {
-    private final RestTemplate restTemplate;
+    private final RemoteJenkinsService remoteJenkinsService;
 
     private final JenkinsProperties jenkinsProperties;
     private final BlockchainProperties blockchainProperties;
 
     public void triggerDeploymentPipeline(SmartContractDeployDto deployDto) {
-        String clumbKey;
-        String clumbValue;
+        String crumbValue;
         String authHeader;
 
         try {
@@ -45,42 +38,28 @@ public class SmartContractService {
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
             authHeader = "Basic " + new String(encodedAuth);
 
-            HttpHeaders authHeaders = new HttpHeaders();
-            authHeaders.set("Authorization", authHeader);
-            HttpEntity<String> authEntity = new HttpEntity<>(authHeaders);
+            Map<String, String> crumbResponse = remoteJenkinsService.getClumb(authHeader);
+            crumbValue = crumbResponse.get("crumb");
 
-            String jenkinsClumbApiUrl = String.format("http://%s/crumbIssuer/api/json", jenkinsProperties.getUrl());
-            ResponseEntity<Map> clumbResponse = restTemplate.exchange(jenkinsClumbApiUrl, org.springframework.http.HttpMethod.GET, authEntity, Map.class);
-
-            clumbKey = clumbResponse.getBody().get("crumbRequestField").toString();
-            clumbValue = clumbResponse.getBody().get("crumb").toString();
-
-            log.info("Jenkins Crumb 요청 성공: " + clumbResponse.getStatusCode());
+            log.info("Jenkins Crumb 요청 성공");
         } catch (RuntimeException e) {
-            log.warn("Jenkins Crumb 요청 실패: " + e.getMessage());
+            log.warn("Jenkins Crumb 요청 실패: {}", e.getMessage());
             throw new RuntimeException("Jenkins Crumb 요청 중 오류 발생", e);
         }
 
         try {
-            String jenkinsApiUrl = String.format("http://%s%s/buildWithParameters", jenkinsProperties.getUrl(), jenkinsProperties.getJob());
+            // OpenFeign 클라이언트의 메서드를 호출하여 Jenkins 빌드 요청
+            ResponseEntity<Void> jenkinsResponse = remoteJenkinsService.requestSmartContractDeploy(
+                    authHeader,
+                    crumbValue,
+                    jenkinsProperties.getAuthenticationToken(),
+                    deployDto.getProjectId(),
+                    deployDto.getTokenName(),
+                    deployDto.getTokenSymbol(),
+                    deployDto.getTotalGoalAmount().toString(),
+                    deployDto.getMinAmount().toString()
+            );
 
-            HttpHeaders postHeaders = new HttpHeaders();
-            postHeaders.add("Authorization", authHeader);
-            postHeaders.add(clumbKey, clumbValue);
-            postHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-            MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parameters.add("token", jenkinsProperties.getAuthenticationToken());
-            parameters.add("TOKEN_NAME", deployDto.getTokenName());
-            parameters.add("TOKEN_SYMBOL", deployDto.getTokenSymbol());
-            parameters.add("TOTAL_GOAL_AMOUNT", deployDto.getTotalGoalAmount().toString());
-            parameters.add("MIN_AMOUNT", deployDto.getMinAmount().toString());
-
-            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(parameters, postHeaders);
-
-            log.info("Jenkins Deploy Request Info : " + request.toString());
-
-            ResponseEntity<String> jenkinsResponse = restTemplate.postForEntity(jenkinsApiUrl, request, String.class);
             log.info("Jenkins 배포 요청 성공: " + jenkinsResponse.getStatusCode());
         } catch (RuntimeException e) {
             log.warn("Jenkins 배포 요청 실패: " + e.getMessage());
