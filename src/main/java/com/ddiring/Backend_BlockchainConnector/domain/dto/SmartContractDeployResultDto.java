@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.domain.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Getter
@@ -8,13 +9,13 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SmartContractDeployResultDto {
+    @NotBlank(message = "조각 투자 상품 아이디를 입력하시오.")
+    private String projectId;
+
     @NotBlank(message = "스마트 컨트랙트 주소를 입력하시오.")
     private String address;
 
-    @NotBlank(message="조각 투자 상품명을 입력하시오.")
-    private String name;
-
-    @NotBlank(message = "조각 투자 심볼을 입력하시오.")
-    private String symbol;
+    @NotBlank(message="배포 파이프라인 응답 결과를 입력하시오.")
+    private String result;
 
 }
