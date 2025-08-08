@@ -72,3 +72,19 @@ tasks.named('build') {
 tasks.named('processResources') {
 	mustRunAfter 'generateContractWrappers'
 }
+
+jar {
+	enabled = false
+}
+
+tasks.register('getAppName') {
+	doLast {
+		println "${rootProject.name}"
+	}
+}
+
+tasks.register('getAppVersion') {
+	doLast {
+		println "${project.version}"
+	}
+}
