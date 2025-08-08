@@ -27,15 +27,7 @@ public class SmartContractController {
 
     @PostMapping("/deploy/result")
     public ApiResponseDto<?> receiveDeployResult(@RequestBody @Valid SmartContractDeployResultDto resultDto) {
-        // TODO: Chainlink Functions Consumer 등록 API(?) 추가
-
-        // TODO: 상품 서비스에 컨트랙트 주소 전송 기능 추가
-
-        log.info(String.format("""
-            Contract Address : %s,
-            Token Name : %s,
-            Token Symbol %s
-        """, resultDto.getAddress(), resultDto.getName(), resultDto.getSymbol()));
+        smartContractService.postDeployProcess(resultDto);
 
         return ApiResponseDto.defaultOK();
     }

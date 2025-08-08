@@ -4,6 +4,8 @@ import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
+import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
+import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapperDto;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SmartContractService {
     private final RemoteJenkinsService remoteJenkinsService;
+    private final RemoteProductService remoteProductService;
 
     private final JenkinsProperties jenkinsProperties;
     private final BlockchainProperties blockchainProperties;
@@ -64,6 +67,24 @@ public class SmartContractService {
         } catch (RuntimeException e) {
             log.warn("Jenkins 배포 요청 실패: " + e.getMessage());
             throw new RuntimeException("Jenkins 파이프라인 요청 중 오류 발생", e);
+        }
+    }
+
+    public void postDeployProcess(SmartContractDeployResultDto resultDto) {
+        if (!"success".equals(resultDto.getResult())) {
+            log.warn("토큰 등록 실패");
+            throw new RuntimeException("토큰 등록 실패");
+        }
+
+        ResponseEntity<Void> response = remoteProductService.setContractAddress(
+                UpdateContractAddressDto.builder()
+                        .projectId(resultDto.getProjectId())
+                        .smartContractAddress(resultDto.getAddress())
+                        .build()
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("Product Service 스마트 컨트랙트 주소 업데이트 실패");
         }
     }
 
