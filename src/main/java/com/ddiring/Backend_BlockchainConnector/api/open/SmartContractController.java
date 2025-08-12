@@ -38,6 +38,8 @@ public class SmartContractController {
 
     @PostMapping(value = "/trade")
     public ApiResponseDto<?> tradeToken(@RequestBody @Valid TradeDto tradeDto) {
+        smartContractService.startTrade(tradeDto);
+
         return ApiResponseDto.defaultOK();
     }
 
