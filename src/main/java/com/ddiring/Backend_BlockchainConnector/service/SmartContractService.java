@@ -100,7 +100,20 @@ public class SmartContractService {
                     contractWrapper.getGasProvider()
             );
 
-            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
+            smartContract.requestInvestment(
+                    investmentDto.getInvestmentId().toString(),
+                    investmentDto.getInvestorAddress(),
+                    BigInteger.valueOf(investmentDto.getTokenAmount())
+            ).sendAsync()
+            .exceptionally(throwable -> {
+                log.error("Investment request Error: {}", throwable.getMessage());
+                throw new RuntimeException("Investment request Error: " + throwable.getMessage());
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     public void startTrade(TradeDto tradeDto) {
         try {
             FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
