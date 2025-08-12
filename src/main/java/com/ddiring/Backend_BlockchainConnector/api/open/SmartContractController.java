@@ -39,6 +39,11 @@ public class SmartContractController {
         return ApiResponseDto.createOK("투자 요청이 완료되었습니다.");
     }
 
+    @PostMapping(value = "/trade")
+    public ApiResponseDto<?> tradeToken() {
+        return ApiResponseDto.defaultOK();
+    }
+
     @GetMapping(value = "/balance")
     public ApiResponseDto<?> getBalance(@ModelAttribute @Valid BalanceDto.Request balanceDto) {
         BalanceDto.Response response = smartContractService.getBalance(balanceDto);
