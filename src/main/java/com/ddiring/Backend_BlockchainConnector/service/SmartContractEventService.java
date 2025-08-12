@@ -75,8 +75,14 @@ public class SmartContractEventService {
 
         Disposable investmentFailedEvent = myContract.investmentFailedEventFlowable(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST)
                 .subscribe(this::handleInvestmentFailure);
+        
+        Disposable tradeSuccessEvent = myContract.tradeSuccessfulEventFlowable(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST)
+                .subscribe(this::handleTradeSuccess);
 
-        activeDisposables.put(contractAddress, List.of(investmentSuccessEvent, investmentFailedEvent));
+        Disposable tradeFailedEvent = myContract.tradeFailedEventFlowable(DefaultBlockParameterName.EARLIEST, DefaultBlockParameterName.LATEST)
+                .subscribe(this::handleTradeFailure);
+
+        activeDisposables.put(contractAddress, List.of(investmentSuccessEvent, investmentFailedEvent, tradeSuccessEvent, tradeFailedEvent));
     }
 
     private void handleInvestmentSuccess(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
@@ -85,5 +91,18 @@ public class SmartContractEventService {
 
     private void handleInvestmentFailure(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
         log.info("Investment 실패: {}, 사유: {}", Arrays.toString(event.projectId), event.reason);
+    }
+    
+    private void handleTradeSuccess(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
+        log.info("[Trade 성공] 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}",
+                Arrays.toString(event.projectId),
+                event.seller,
+                event.buyer,
+                event.tokenAmount
+        );
+    }
+
+    private void handleTradeFailure(FractionalInvestmentToken.TradeFailedEventResponse event) {
+        log.info("[Trade 실패] 거래 번호: {}, 사유: {}", Arrays.toString(event.projectId), event.reason);
     }
 }
