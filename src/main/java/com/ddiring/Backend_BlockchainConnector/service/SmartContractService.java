@@ -6,16 +6,12 @@ import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;
-import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapperDto;
+import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.web3j.crypto.Credentials;
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.gas.DynamicGasProvider;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -26,11 +22,12 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class SmartContractService {
+    private final ContractWrapper contractWrapper;
+
     private final RemoteJenkinsService remoteJenkinsService;
     private final RemoteProductService remoteProductService;
 
     private final JenkinsProperties jenkinsProperties;
-    private final BlockchainProperties blockchainProperties;
 
     public void triggerDeploymentPipeline(SmartContractDeployDto deployDto) {
         String crumbValue;
@@ -94,26 +91,14 @@ public class SmartContractService {
         }
     }
 
-    private ContractWrapperDto setupContractWrapper() {
-        try {
-            Web3j web3j = Web3j.build(new HttpService(blockchainProperties.getSepolia().getRpc().getUrl()));
-            Credentials credentials = Credentials.create(blockchainProperties.getAdmin().getKey().getPrivateKey());
-            DynamicGasProvider gasProvider = new DynamicGasProvider(web3j);
-            return ContractWrapperDto.builder()
-                    .web3j(web3j)
-                    .credentials(credentials)
-                    .gasProvider(gasProvider)
-                    .build();
-        } catch (Exception e) {
-            throw new RuntimeException("Web3j 설정 실패 : " + e);
-        }
-    }
-
     public void investment(InvestmentDto investmentDto) {
         try {
-            ContractWrapperDto contractWrapperDto = setupContractWrapper();
-
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(investmentDto.getSmartContractAddress(), contractWrapperDto.getWeb3j(), contractWrapperDto.getCredentials(), contractWrapperDto.getGasProvider());
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
+                    investmentDto.getSmartContractAddress(),
+                    contractWrapper.getWeb3j(),
+                    contractWrapper.getCredentials(),
+                    contractWrapper.getGasProvider()
+            );
 
             smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
         } catch (Exception e) {
@@ -123,9 +108,12 @@ public class SmartContractService {
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
         try {
-            ContractWrapperDto contractWrapperDto = setupContractWrapper();
-
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(balanceDto.getSmartContractAddress(), contractWrapperDto.getWeb3j(), contractWrapperDto.getCredentials(), contractWrapperDto.getGasProvider());
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
+                    balanceDto.getSmartContractAddress(),
+                    contractWrapper.getWeb3j(),
+                    contractWrapper.getCredentials(),
+                    contractWrapper.getGasProvider()
+            );
 
             BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
             BigInteger divisor = new BigInteger("1000000000000000000"); // 10의 18제곱
