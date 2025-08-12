@@ -100,7 +100,69 @@ public class SmartContractService {
                     contractWrapper.getGasProvider()
             );
 
-            smartContract.requestInvestment(investmentDto.getInvestmentId().toString(), investmentDto.getInvestorAddress(), BigInteger.valueOf(investmentDto.getTokenAmount())).sendAsync();
+            smartContract.requestInvestment(
+                    investmentDto.getInvestmentId().toString(),
+                    investmentDto.getInvestorAddress(),
+                    BigInteger.valueOf(investmentDto.getTokenAmount())
+            ).sendAsync()
+            .exceptionally(throwable -> {
+                log.error("Investment request Error: {}", throwable.getMessage());
+                throw new RuntimeException("Investment request Error: " + throwable.getMessage());
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void startTrade(TradeDto tradeDto) {
+        try {
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
+                    tradeDto.getSmartContractAddress(),
+                    contractWrapper.getWeb3j(),
+                    contractWrapper.getCredentials(),
+                    contractWrapper.getGasProvider()
+            );
+
+            smartContract.approve(tradeDto.getSellerAddress(), BigInteger.valueOf(tradeDto.getTokenAmount()))
+                    .sendAsync()
+                    .thenAccept(result -> {
+                        if (result.isStatusOK()) {
+                            log.info("Approval successful: {}", result.getLogs());
+
+                            requestTrade(tradeDto);
+                        } else {
+                            log.warn("Approval failed: {}", result.getLogs());
+                        }
+                    })
+                    .exceptionally(throwable -> {
+                        log.error("Approval Error: {}", throwable.getMessage());
+                        throw new RuntimeException("Approval Error: " + throwable.getMessage());
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private void requestTrade(TradeDto tradeDto) {
+        try {
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
+                    tradeDto.getSmartContractAddress(),
+                    contractWrapper.getWeb3j(),
+                    contractWrapper.getCredentials(),
+                    contractWrapper.getGasProvider()
+            );
+
+            smartContract.requestTrade(
+                    tradeDto.getTradeId().toString(),
+                    tradeDto.getSellerAddress(),
+                    tradeDto.getBuyerAddress(),
+                    BigInteger.valueOf(tradeDto.getTokenAmount())
+            ).sendAsync()
+            .exceptionally(throwable -> {
+                log.error("Trade request Error: {}", throwable.getMessage());
+                throw new RuntimeException("Trade request Error: " + throwable.getMessage());
+            });
+
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
