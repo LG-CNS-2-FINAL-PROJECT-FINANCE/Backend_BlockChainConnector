@@ -178,12 +178,12 @@ public class SmartContractService {
             );
 
             BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
-            BigInteger divisor = new BigInteger("1000000000000000000"); // 10의 18제곱
-            Long tokenAmountDecimal = tokenAmountWei.divide(divisor).longValue();
+            BigInteger decimals = smartContract.decimals().send();
+            Long tokenAmountDecimal = tokenAmountWei.divide(decimals).longValue();
 
             return BalanceDto.Response.builder().tokenAmount(tokenAmountDecimal).build();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }
