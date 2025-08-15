@@ -12,12 +12,6 @@ public class PermitSignatureTypes {
 
     @Builder.Default
     private Map<String, List<SignatureType>> types = Map.of(
-        "EIP712Domain", List.of(
-                new SignatureType("name", "string"),
-                new SignatureType("version", "string"),
-                new SignatureType("chainId", "uint256"),
-                new SignatureType("verifyingContract", "address")
-        ),
         "Permit", List.of(
                 new SignatureType("owner", "address"),
                 new SignatureType("spender", "address"),
