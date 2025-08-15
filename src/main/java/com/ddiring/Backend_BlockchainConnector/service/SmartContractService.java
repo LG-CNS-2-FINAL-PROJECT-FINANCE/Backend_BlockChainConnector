@@ -1,6 +1,5 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
-import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
@@ -110,11 +109,11 @@ public class SmartContractService {
                 throw new RuntimeException("Investment request Error: " + throwable.getMessage());
             });
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
-    public void startTrade(TradeDto tradeDto) {
+    public void trade(TradeDto tradeDto) {
         try {
             FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
                     tradeDto.getSmartContractAddress(),
@@ -123,45 +122,7 @@ public class SmartContractService {
                     contractWrapper.getGasProvider()
             );
 
-            smartContract.approve(tradeDto.getSellerAddress(), BigInteger.valueOf(tradeDto.getTokenAmount()))
-                    .sendAsync()
-                    .thenAccept(result -> {
-                        if (result.isStatusOK()) {
-                            log.info("Approval successful: {}", result.getLogs());
-
-                            requestTrade(tradeDto);
-                        } else {
-                            log.warn("Approval failed: {}", result.getLogs());
-                        }
-                    })
-                    .exceptionally(throwable -> {
-                        log.error("Approval Error: {}", throwable.getMessage());
-                        throw new RuntimeException("Approval Error: " + throwable.getMessage());
-                    });
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    private void requestTrade(TradeDto tradeDto) {
-        try {
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    tradeDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-
-            smartContract.requestTrade(
-                    tradeDto.getTradeId().toString(),
-                    tradeDto.getSellerAddress(),
-                    tradeDto.getBuyerAddress(),
-                    BigInteger.valueOf(tradeDto.getTokenAmount())
-            ).sendAsync()
-            .exceptionally(throwable -> {
-                log.error("Trade request Error: {}", throwable.getMessage());
-                throw new RuntimeException("Trade request Error: " + throwable.getMessage());
-            });
+            // TODO: 거래 요청 로직 추가
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
