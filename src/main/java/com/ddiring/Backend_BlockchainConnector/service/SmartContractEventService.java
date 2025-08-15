@@ -27,7 +27,7 @@ public class SmartContractEventService {
         // TODO: DB에서 계약 주소를 조회하는 로직 추가
         // 예시로 하드코딩된 계약 주소를 사용합니다.
         // Dto 구성 必 -> { 컨트랙트 주소, 마지막 블록 번호, 컨트랙트 상태 등 }
-        List<String> contractAddresses = List.of("0xf829ec1d09c6d9ac97489096b85277012eb56e74", "0xb1b659696049b455540056c0bdeef76de09cd92f");
+        List<String> contractAddresses = List.of("0xB66620582baA67eEdA14690555433f896B66f663");
 
         for (String address : contractAddresses) {
             setupEventFilter(address);
@@ -80,7 +80,11 @@ public class SmartContractEventService {
     }
 
     private void handleInvestmentSuccess(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
-        log.info("Investment 성공: {}", Arrays.toString(event.projectId));
+        log.info("Investment 성공: 투자 번호 : {}, 투자자: {}, 금액: {}",
+                Arrays.toString(event.investmentId),
+                event.buyer,
+                event.tokenAmount
+        );
     }
 
     private void handleInvestmentFailure(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
