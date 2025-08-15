@@ -49,7 +49,6 @@ public class SmartContractTradeService {
                         .verifyingContract(permitSignatureDto.getSmartContractAddress())
                         .build()
                 )
-                .types(PermitSignatureTypes.builder().build())
                 .message(PermitSignatureMessage.builder()
                         .owner(permitSignatureDto.getUserAddress())
                         .spender(permitSignatureDto.getSmartContractAddress())
