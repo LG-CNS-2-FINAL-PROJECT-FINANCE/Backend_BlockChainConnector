@@ -2,6 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.type.PermitSignatureTypes;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;
@@ -110,22 +111,6 @@ public class SmartContractService {
             });
         } catch (Exception e) {
             throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
-        }
-    }
-
-    public void trade(TradeDto tradeDto) {
-        try {
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    tradeDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-
-            // TODO: 거래 요청 로직 추가
-
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
         }
     }
 
