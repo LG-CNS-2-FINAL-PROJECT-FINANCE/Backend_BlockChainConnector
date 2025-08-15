@@ -2,6 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.api.open;
 
 import com.ddiring.Backend_BlockchainConnector.common.dto.ApiResponseDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.TradeDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.service.SmartContractTradeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +22,10 @@ public class SmartContractTradeController {
     private final SmartContractTradeService smartContractTradeService;
 
     @PostMapping(value = "/signature")
-    public ApiResponseDto<?> getSignature() {
+    public ApiResponseDto<?> getSignature(@RequestBody @Valid PermitSignatureDto.Request permitSignatureDto) {
+        PermitSignatureDto.Response response = smartContractTradeService.getSignature(permitSignatureDto);
 
-        return ApiResponseDto.defaultOK();
+        return ApiResponseDto.createOK(response);
     }
 
     @PostMapping(value = "/deposit")
