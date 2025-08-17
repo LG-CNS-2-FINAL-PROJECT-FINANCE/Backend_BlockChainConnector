@@ -88,11 +88,11 @@ public class SmartContractTradeService {
                     log.info("[Smart Contract] 거래 성공: {}", response);
                 })
                 .exceptionally(throwable -> {
-                    log.error("[Smart Contract] 예상치 못한 에러 발생 : {}", throwable.getMessage());
-                    throw new RuntimeException("[Smart Contract] 예상치 못한 에러 발생 : " + throwable.getMessage());
+                    log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
+                    throw new RuntimeException("[Smart Contract] 토큰 예치 요청 중 에러 발생 : " + throwable.getMessage());
                 });
         } catch (Exception e) {
-            log.error("[Blockchain Connector] 예상치 못한 에러 발생 : {}", e.getMessage());
+            log.error("[Blockchain Connector]   : {}", e.getMessage());
             throw new RuntimeException("[Blockchain Connector] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
@@ -106,10 +106,21 @@ public class SmartContractTradeService {
                     contractWrapper.getGasProvider()
             );
 
-            // TODO: 거래 요청 로직 추가
+            // TODO: 컨트랙트 내의 거래 요청 수정에 따른 로직 변경 필요
+            smartContract.requestTrade(
+                    tradeDto.getTradeId().toString(),
+                    tradeDto.getBuyerAddress()
+            ).sendAsync()
+                .thenAccept(response -> {
+                    log.info("[Smart Contract] 거래 요청 성공: {}", response);
+                })
+                .exceptionally(throwable -> {
+                    log.error("[Smart Contract] 거래 요청 중 에러 발생: {}", throwable.getMessage());
+                    throw new RuntimeException("[Smart Contract] 거래 요청 중 에러 발생: " + throwable.getMessage());
+                });
 
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("[Blockchain Connector] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }
