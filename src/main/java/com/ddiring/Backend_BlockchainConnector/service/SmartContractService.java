@@ -124,7 +124,10 @@ public class SmartContractService {
 
             BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
             BigInteger decimals = smartContract.decimals().send();
-            Long tokenAmountDecimal = tokenAmountWei.divide(decimals).longValue();
+            Long tokenAmountDecimal = tokenAmountWei.divide(BigInteger.TEN.pow(decimals.intValue())).longValue();
+
+            log.info("decimals: {}, tokenAmountWei: {}, tokenAmountDecimal: {}",
+                    decimals, tokenAmountWei, tokenAmountDecimal);
 
             return BalanceDto.Response.builder().tokenAmount(tokenAmountDecimal).build();
         } catch (Exception e) {
