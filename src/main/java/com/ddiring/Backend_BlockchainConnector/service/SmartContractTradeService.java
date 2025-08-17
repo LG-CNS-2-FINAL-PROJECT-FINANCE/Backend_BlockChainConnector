@@ -1,17 +1,17 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.domain.dto.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.domain.PermitSignatureDomain;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.message.PermitSignatureMessage;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.type.PermitSignatureTypes;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.validation.Valid;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
 
@@ -60,6 +60,40 @@ public class SmartContractTradeService {
                 .build();
         } catch (Exception e) {
             throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+        }
+    }
+
+    public void deposit(DepositWithPermitDto depositDto) {
+        try {
+            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
+                    depositDto.getSmartContractAddress(),
+                    contractWrapper.getWeb3j(),
+                    contractWrapper.getCredentials(),
+                    contractWrapper.getGasProvider()
+            );
+
+            smartContract.depositWithPermit(
+                    depositDto.getTradeId().toString(),
+                    depositDto.getSellerAddress(),
+                    depositDto.getBuyerAddress(),
+                    depositDto.getTokenAmount(),
+                    depositDto.getDeadline(),
+                    BigInteger.valueOf(depositDto.getV()),
+                    Numeric.hexStringToByteArray(depositDto.getR()),
+                    Numeric.hexStringToByteArray(depositDto.getS())
+            ).sendAsync()
+                .thenAccept(response -> {
+                    // TODO; 거래 성공 후 처리 로직 추가
+                    // 예: 거래 성공 이벤트 발생, DB 업데이트 등
+                    log.info("[Smart Contract] 거래 성공: {}", response);
+                })
+                .exceptionally(throwable -> {
+                    log.error("[Smart Contract] 예상치 못한 에러 발생 : {}", throwable.getMessage());
+                    throw new RuntimeException("[Smart Contract] 예상치 못한 에러 발생 : " + throwable.getMessage());
+                });
+        } catch (Exception e) {
+            log.error("[Blockchain Connector] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Blockchain Connector] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
