@@ -2,7 +2,6 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.type.PermitSignatureTypes;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;

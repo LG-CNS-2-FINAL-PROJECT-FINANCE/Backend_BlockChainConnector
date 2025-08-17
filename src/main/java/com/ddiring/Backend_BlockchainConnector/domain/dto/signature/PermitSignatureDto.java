@@ -2,10 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.domain.dto.signature;
 
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.domain.PermitSignatureDomain;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.message.PermitSignatureMessage;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.type.PermitSignatureTypes;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.type.SignatureType;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -47,12 +45,6 @@ public class PermitSignatureDto {
 
         @Builder.Default
         private Map<String, List<SignatureType>> types = Map.of(
-                "EIP712Domain", List.of(
-                    SignatureType.builder().name("name").type("string").build(),
-                    SignatureType.builder().name("version").type("string").build(),
-                    SignatureType.builder().name("chainId").type("uint256").build(),
-                    SignatureType.builder().name("verifyingContract").type("address").build()
-                ),
                 "Permit", List.of(
                     SignatureType.builder().name("owner").type("address").build(),
                     SignatureType.builder().name("spender").type("address").build(),
