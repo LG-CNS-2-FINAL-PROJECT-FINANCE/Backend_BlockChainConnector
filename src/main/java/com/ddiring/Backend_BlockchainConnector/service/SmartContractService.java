@@ -1,6 +1,5 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
-import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
@@ -110,61 +109,7 @@ public class SmartContractService {
                 throw new RuntimeException("Investment request Error: " + throwable.getMessage());
             });
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    public void startTrade(TradeDto tradeDto) {
-        try {
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    tradeDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-
-            smartContract.approve(tradeDto.getSellerAddress(), BigInteger.valueOf(tradeDto.getTokenAmount()))
-                    .sendAsync()
-                    .thenAccept(result -> {
-                        if (result.isStatusOK()) {
-                            log.info("Approval successful: {}", result.getLogs());
-
-                            requestTrade(tradeDto);
-                        } else {
-                            log.warn("Approval failed: {}", result.getLogs());
-                        }
-                    })
-                    .exceptionally(throwable -> {
-                        log.error("Approval Error: {}", throwable.getMessage());
-                        throw new RuntimeException("Approval Error: " + throwable.getMessage());
-                    });
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    private void requestTrade(TradeDto tradeDto) {
-        try {
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    tradeDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-
-            smartContract.requestTrade(
-                    tradeDto.getTradeId().toString(),
-                    tradeDto.getSellerAddress(),
-                    tradeDto.getBuyerAddress(),
-                    BigInteger.valueOf(tradeDto.getTokenAmount())
-            ).sendAsync()
-            .exceptionally(throwable -> {
-                log.error("Trade request Error: {}", throwable.getMessage());
-                throw new RuntimeException("Trade request Error: " + throwable.getMessage());
-            });
-
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
@@ -178,12 +123,15 @@ public class SmartContractService {
             );
 
             BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
-            BigInteger divisor = new BigInteger("1000000000000000000"); // 10의 18제곱
-            Long tokenAmountDecimal = tokenAmountWei.divide(divisor).longValue();
+            BigInteger decimals = smartContract.decimals().send();
+            Long tokenAmountDecimal = tokenAmountWei.divide(BigInteger.TEN.pow(decimals.intValue())).longValue();
+
+            log.info("decimals: {}, tokenAmountWei: {}, tokenAmountDecimal: {}",
+                    decimals, tokenAmountWei, tokenAmountDecimal);
 
             return BalanceDto.Response.builder().tokenAmount(tokenAmountDecimal).build();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }
