@@ -1,7 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
-import com.ddiring.Backend_BlockchainConnector.domain.dto.DepositWithPermitDto;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.TradeDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.domain.PermitSignatureDomain;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.message.PermitSignatureMessage;
@@ -73,9 +73,8 @@ public class SmartContractTradeService {
             );
 
             smartContract.depositWithPermit(
-                    depositDto.getTradeId().toString(),
+                    depositDto.getSellId().toString(),
                     depositDto.getSellerAddress(),
-                    depositDto.getBuyerAddress(),
                     depositDto.getTokenAmount(),
                     depositDto.getDeadline(),
                     BigInteger.valueOf(depositDto.getV()),
@@ -108,9 +107,12 @@ public class SmartContractTradeService {
 
             smartContract.requestTrade(
                     tradeDto.getTradeId().toString(),
-                    tradeDto.getSellerAddress(),
-                    tradeDto.getBuyerAddress(),
-                    BigInteger.valueOf(tradeDto.getTokenAmount())
+                    tradeDto.getSellInfo().getSellId().toString(),
+                    tradeDto.getSellInfo().getSellerAddress(),
+                    BigInteger.valueOf(tradeDto.getSellInfo().getTokenAmount()),
+                    tradeDto.getBuyInfo().getBuyId().toString(),
+                    tradeDto.getBuyInfo().getBuyerAddress(),
+                    BigInteger.valueOf(tradeDto.getBuyInfo().getTokenAmount())
             ).sendAsync()
                 .thenAccept(response -> {
                     log.info("[Smart Contract] 거래 요청 성공: {}", response);
