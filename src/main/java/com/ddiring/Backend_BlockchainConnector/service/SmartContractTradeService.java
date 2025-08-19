@@ -106,10 +106,11 @@ public class SmartContractTradeService {
                     contractWrapper.getGasProvider()
             );
 
-            // TODO: 컨트랙트 내의 거래 요청 수정에 따른 로직 변경 필요
             smartContract.requestTrade(
                     tradeDto.getTradeId().toString(),
-                    tradeDto.getBuyerAddress()
+                    tradeDto.getSellerAddress(),
+                    tradeDto.getBuyerAddress(),
+                    BigInteger.valueOf(tradeDto.getTokenAmount())
             ).sendAsync()
                 .thenAccept(response -> {
                     log.info("[Smart Contract] 거래 요청 성공: {}", response);
