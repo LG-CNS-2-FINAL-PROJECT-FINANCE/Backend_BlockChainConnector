@@ -27,7 +27,7 @@ public class SmartContractEventService {
         // TODO: DB에서 계약 주소를 조회하는 로직 추가
         // 예시로 하드코딩된 계약 주소를 사용합니다.
         // Dto 구성 必 -> { 컨트랙트 주소, 마지막 블록 번호, 컨트랙트 상태 등 }
-        List<String> contractAddresses = List.of("0xB66620582baA67eEdA14690555433f896B66f663");
+        List<String> contractAddresses = List.of("0xf01ce1e10d3b282f75ba96e8dd259d6de5941b33");
 
         for (String address : contractAddresses) {
             setupEventFilter(address);
@@ -86,15 +86,21 @@ public class SmartContractEventService {
     }
 
     private void handleInvestmentSuccess(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
-        log.info("Investment 성공: 투자 번호 : {}, 투자자: {}, 금액: {}",
+        log.info("[Investment 성공] 투자 번호 : {}, 투자자: {}, 금액: {}",
                 Arrays.toString(event.investmentId),
                 event.buyer,
                 event.tokenAmount
         );
+
+        // TODO: Asset Service에 투자 성공 이벤트 전송 로직 추가
+        // 투자자 토큰 잔액 업데이트
+
+        // TODO: Product Service에 투자 성공 이벤트 전송 로직 추가
+        //
     }
 
     private void handleInvestmentFailure(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
-        log.info("Investment 실패: {}, 사유: {}", Arrays.toString(event.projectId), event.reason);
+        log.info("[Investment 실패] 프로젝트 번호 : {}, 사유: {}", event.projectId, event.reason);
     }
     
     private void handleTradeSuccess(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
@@ -107,6 +113,6 @@ public class SmartContractEventService {
     }
 
     private void handleTradeFailure(FractionalInvestmentToken.TradeFailedEventResponse event) {
-        log.info("[Trade 실패] 거래 번호: {}, 사유: {}", Arrays.toString(event.projectId), event.reason);
+        log.info("[Trade 실패] 거래 번호: {}, 사유: {}", event.projectId, event.reason);
     }
 }
