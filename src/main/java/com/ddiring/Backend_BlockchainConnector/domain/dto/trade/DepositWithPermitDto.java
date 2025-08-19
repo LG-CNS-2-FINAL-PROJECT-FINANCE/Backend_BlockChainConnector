@@ -1,8 +1,7 @@
-package com.ddiring.Backend_BlockchainConnector.domain.dto;
+package com.ddiring.Backend_BlockchainConnector.domain.dto.trade;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,13 +18,10 @@ public class DepositWithPermitDto {
     private String smartContractAddress;
 
     @NotNull
-    private Long tradeId;
+    private Long sellId;
 
     @NotBlank
     private String sellerAddress;
-
-    @NotBlank
-    private String buyerAddress;
 
     @NotNull
     private BigInteger tokenAmount;
