@@ -1,5 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestSucceededEvent;
+import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import io.reactivex.disposables.Disposable;
@@ -18,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class SmartContractEventService {
+    private final KafkaMessageProducer kafkaMessageProducer;
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
 
     private final ContractWrapper contractWrapper;
@@ -86,17 +89,19 @@ public class SmartContractEventService {
     }
 
     private void handleInvestmentSuccess(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
+        Long investmentId = 1L; // TODO: 실제 투자 ID로 변경 필요
+        String buyerAddress = event.buyer;
+        Long tokenAmount = event.tokenAmount.longValue();
+
         log.info("[Investment 성공] 투자 번호 : {}, 투자자: {}, 금액: {}",
-                Arrays.toString(event.investmentId),
-                event.buyer,
-                event.tokenAmount
+                investmentId,
+                buyerAddress,
+                tokenAmount
         );
 
-        // TODO: Asset Service에 투자 성공 이벤트 전송 로직 추가
-        // 투자자 토큰 잔액 업데이트
+        InvestSucceededEvent message = InvestSucceededEvent.of(investmentId, buyerAddress, tokenAmount);
 
-        // TODO: Product Service에 투자 성공 이벤트 전송 로직 추가
-        //
+        kafkaMessageProducer.sendMessage(InvestSucceededEvent.TOPIC, message);
     }
 
     private void handleInvestmentFailure(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
