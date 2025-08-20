@@ -1,9 +1,5 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
-import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestFailedEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestSucceededEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.trade.TradeFailedEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.trade.TradeSucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
@@ -102,9 +98,7 @@ public class SmartContractEventService {
                 tokenAmount
         );
 
-        InvestSucceededEvent message = InvestSucceededEvent.of(investmentId, buyerAddress, tokenAmount);
-
-        kafkaMessageProducer.sendMessage(InvestSucceededEvent.TOPIC, message);
+        kafkaMessageProducer.sendInvestSucceededEvent(investmentId, buyerAddress, tokenAmount);
     }
 
     private void handleInvestmentFailure(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
@@ -114,14 +108,12 @@ public class SmartContractEventService {
 
         log.info("[Investment 실패] 프로젝트 번호 : {}, 사유: {}", event.projectId, event.reason);
 
-        InvestFailedEvent message = InvestFailedEvent.of(investmentId, buyerAddress, tokenAmount, event.reason);
-
-        kafkaMessageProducer.sendMessage(InvestFailedEvent.TOPIC, message);
+        kafkaMessageProducer.sendInvestFailedEvent(investmentId, buyerAddress, tokenAmount);
     }
     
     private void handleTradeSuccess(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
         // TODO: 실제 값으로 변경 필요
-        Long projectId = 1L;
+        Long tradeId = 1L;
         String seller = "event.seller";
         String buyer = "event.buyer";
         Long tokenAmount = event.tokenAmount.longValue();
@@ -133,28 +125,18 @@ public class SmartContractEventService {
                 event.tokenAmount
         );
 
-        TradeSucceededEvent message = TradeSucceededEvent.of(
-                projectId,
-                buyer,
-                tokenAmount,
-                seller,
-                tokenAmount
-        );
-
-        kafkaMessageProducer.sendMessage(TradeSucceededEvent.TOPIC, message);
+        kafkaMessageProducer.sendTradeSucceededEvent(tradeId, buyer, tokenAmount, seller, tokenAmount);
     }
 
     private void handleTradeFailure(FractionalInvestmentToken.TradeFailedEventResponse event) {
         // TODO: 실제 값으로 변경 필요
-        Long projectId = 1L;
+        Long tradeId = 1L;
         String seller = "event.seller";
         String buyer = "event.buyer";
         Long tokenAmount = 100L;
 
         log.info("[Trade 실패] 거래 번호: {}, 사유: {}", event.projectId, event.reason);
 
-        TradeFailedEvent message = TradeFailedEvent.of(projectId, buyer, tokenAmount, seller, tokenAmount, event.reason);
-
-        kafkaMessageProducer.sendMessage(TradeFailedEvent.TOPIC, message);
+        kafkaMessageProducer.sendTradeFailedEvent(tradeId, buyer, tokenAmount, seller, tokenAmount, event.reason);
     }
 }

@@ -4,6 +4,9 @@ import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedE
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestAcceptedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestRejectedEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestSucceededEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.trade.TradeFailedEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.trade.TradeSucceededEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -41,5 +44,29 @@ public class KafkaMessageProducer {
         InvestRequestRejectedEvent message = InvestRequestRejectedEvent.of(investmentId, reason);
         log.info("Sending InvestRequestRejectedEvent to topic {}: {}", InvestRequestRejectedEvent.TOPIC, message);
         sendMessage(InvestRequestRejectedEvent.TOPIC, message);
+    }
+
+    public void sendInvestSucceededEvent(Long investmentId, String buyerAddress, Long tokenAmount) {
+        InvestSucceededEvent message = InvestSucceededEvent.of(investmentId, buyerAddress, tokenAmount);
+        log.info("Sending InvestSucceededEvent to topic {}: {}", TradeSucceededEvent.TOPIC, message);
+        sendMessage(InvestSucceededEvent.TOPIC, message);
+    }
+
+    public void sendInvestFailedEvent(Long investmentId, String buyerAddress, long tokenAmount) {
+        InvestSucceededEvent message = InvestSucceededEvent.of(investmentId, buyerAddress, tokenAmount);
+        log.info("Sending InvestFailedEvent to topic {}: {}", InvestSucceededEvent.TOPIC, message);
+        sendMessage(InvestSucceededEvent.TOPIC, message);
+    }
+
+    public void sendTradeSucceededEvent(Long tradeId, String buyerAddress, Long buyerTokenAmount, String sellerAddress, Long sellerTokenAmount) {
+        TradeSucceededEvent message = TradeSucceededEvent.of(tradeId, buyerAddress, buyerTokenAmount, sellerAddress, sellerTokenAmount);
+        log.info("Sending TradeSucceededEvent to topic {}: {}", TradeSucceededEvent.TOPIC, message);
+        sendMessage(TradeSucceededEvent.TOPIC, message);
+    }
+
+    public void sendTradeFailedEvent(Long tradeId, String buyerAddress, Long buyerTokenAmount, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
+        TradeFailedEvent message = TradeFailedEvent.of(tradeId, buyerAddress, buyerTokenAmount, sellerAddress, sellerTokenAmount, errorMessage);
+        log.info("Sending TradeFailedEvent to topic {}: {}", TradeFailedEvent.TOPIC, message);
+        sendMessage(TradeFailedEvent.TOPIC, message);
     }
 }
