@@ -108,7 +108,7 @@ public class SmartContractEventService {
 
         log.info("[Investment 실패] 프로젝트 번호 : {}, 사유: {}", event.projectId, event.reason);
 
-        kafkaMessageProducer.sendInvestFailedEvent(investmentId, buyerAddress, tokenAmount);
+        kafkaMessageProducer.sendInvestFailedEvent(investmentId, buyerAddress, tokenAmount, event.reason);
     }
     
     private void handleTradeSuccess(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
