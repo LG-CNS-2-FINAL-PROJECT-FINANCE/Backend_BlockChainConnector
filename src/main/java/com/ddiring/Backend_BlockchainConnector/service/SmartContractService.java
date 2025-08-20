@@ -2,6 +2,10 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
+import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestAcceptedEvent;
+import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;
@@ -22,6 +26,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SmartContractService {
     private final ContractWrapper contractWrapper;
+    private final KafkaMessageProducer kafkaMessageProducer;
 
     private final RemoteJenkinsService remoteJenkinsService;
     private final RemoteProductService remoteProductService;
@@ -67,50 +72,51 @@ public class SmartContractService {
     }
 
     public void postDeployProcess(SmartContractDeployResultDto resultDto) {
+        if (!"success".equals(resultDto.getStatus())) {
+            log.error("스마트 컨트랙트 배포 실패: {}", resultDto.getStatus());
+            kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
+            return;
+        }
         try {
-            if (!"success".equals(resultDto.getStatus())) {
-                log.warn("토큰 등록 실패");
-                throw new RuntimeException("토큰 등록 실패");
-            }
-
-            ResponseEntity<Void> response = remoteProductService.setContractAddress(
-                    UpdateContractAddressDto.builder()
-                            .projectId(resultDto.getProjectId())
-                            .smartContractAddress(resultDto.getAddress())
-                            .build()
-            );
-
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                log.warn("Product Service 스마트 컨트랙트 주소 업데이트 실패");
-
-                throw new RuntimeException("Product Service 스마트 컨트랙트 주소 업데이트 실패");
-            }
+            log.info("스마트 컨트랙트 배포 성공: {}", resultDto.getAddress());
+            kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
         } catch (Exception e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("예상치 못한 에러로 인한 배포 실패: {}", e.getMessage());
+            kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
         }
     }
 
     public void investment(InvestmentDto investmentDto) {
+        FractionalInvestmentToken smartContract;
+
+        // 동기 처리
         try {
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
+            smartContract = FractionalInvestmentToken.load(
                     investmentDto.getSmartContractAddress(),
                     contractWrapper.getWeb3j(),
                     contractWrapper.getCredentials(),
                     contractWrapper.getGasProvider()
             );
-
-            smartContract.requestInvestment(
-                    investmentDto.getInvestmentId().toString(),
-                    investmentDto.getInvestorAddress(),
-                    BigInteger.valueOf(investmentDto.getTokenAmount())
-            ).sendAsync()
-            .exceptionally(throwable -> {
-                log.error("Investment request Error: {}", throwable.getMessage());
-                throw new RuntimeException("Investment request Error: " + throwable.getMessage());
-            });
         } catch (Exception e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("스마트 컨트랙트 로딩 에러: {}", e.getMessage());
+            throw new RuntimeException("스마트 컨트랙트 로딩 에러: {}" + e.getMessage());
         }
+
+        // 비동기 처리
+        smartContract.requestInvestment(
+            investmentDto.getInvestmentId().toString(),
+            investmentDto.getInvestorAddress(),
+            BigInteger.valueOf(investmentDto.getTokenAmount())
+        ).sendAsync()
+        .thenAccept(response -> {
+            log.info("Investment request successful: {}", response);
+            kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getInvestmentId());
+        })
+        .exceptionally(throwable -> {
+            log.error("Investment request Error: {}", throwable.getMessage());
+            kafkaMessageProducer.sendInvestRequestRejectedEvent(investmentDto.getInvestmentId(), throwable.getMessage());
+            return null;
+        });
     }
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {

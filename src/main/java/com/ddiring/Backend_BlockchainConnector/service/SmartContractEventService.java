@@ -1,5 +1,6 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import io.reactivex.disposables.Disposable;
@@ -18,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class SmartContractEventService {
+    private final KafkaMessageProducer kafkaMessageProducer;
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
 
     private final ContractWrapper contractWrapper;
@@ -27,7 +29,7 @@ public class SmartContractEventService {
         // TODO: DB에서 계약 주소를 조회하는 로직 추가
         // 예시로 하드코딩된 계약 주소를 사용합니다.
         // Dto 구성 必 -> { 컨트랙트 주소, 마지막 블록 번호, 컨트랙트 상태 등 }
-        List<String> contractAddresses = List.of("0xB66620582baA67eEdA14690555433f896B66f663");
+        List<String> contractAddresses = List.of("0xf01ce1e10d3b282f75ba96e8dd259d6de5941b33");
 
         for (String address : contractAddresses) {
             setupEventFilter(address);
@@ -86,27 +88,55 @@ public class SmartContractEventService {
     }
 
     private void handleInvestmentSuccess(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
-        log.info("Investment 성공: 투자 번호 : {}, 투자자: {}, 금액: {}",
-                Arrays.toString(event.investmentId),
-                event.buyer,
-                event.tokenAmount
+        Long investmentId = 1L; // TODO: 실제 투자 ID로 변경 필요
+        String buyerAddress = event.buyer;
+        Long tokenAmount = event.tokenAmount.longValue();
+
+        log.info("[Investment 성공] 투자 번호 : {}, 투자자: {}, 금액: {}",
+                investmentId,
+                buyerAddress,
+                tokenAmount
         );
+
+        kafkaMessageProducer.sendInvestSucceededEvent(investmentId, buyerAddress, tokenAmount);
     }
 
     private void handleInvestmentFailure(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
-        log.info("Investment 실패: {}, 사유: {}", Arrays.toString(event.projectId), event.reason);
+        Long investmentId = 1L; // TODO: 실제 투자 ID로 변경 필요
+        String buyerAddress = "event.buyer"; // TODO: 실제 구매자 주소로 변경 필요
+        Long tokenAmount = 1000L; // TODO: 실제 투자 금액으로 변경 필요
+
+        log.info("[Investment 실패] 프로젝트 번호 : {}, 사유: {}", event.projectId, event.reason);
+
+        kafkaMessageProducer.sendInvestFailedEvent(investmentId, buyerAddress, tokenAmount, event.reason);
     }
     
     private void handleTradeSuccess(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
+        // TODO: 실제 값으로 변경 필요
+        Long tradeId = 1L;
+        String seller = "event.seller";
+        String buyer = "event.buyer";
+        Long tokenAmount = event.tokenAmount.longValue();
+
         log.info("[Trade 성공] 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}",
                 Arrays.toString(event.projectId),
                 event.seller,
                 event.buyer,
                 event.tokenAmount
         );
+
+        kafkaMessageProducer.sendTradeSucceededEvent(tradeId, buyer, tokenAmount, seller, tokenAmount);
     }
 
     private void handleTradeFailure(FractionalInvestmentToken.TradeFailedEventResponse event) {
-        log.info("[Trade 실패] 거래 번호: {}, 사유: {}", Arrays.toString(event.projectId), event.reason);
+        // TODO: 실제 값으로 변경 필요
+        Long tradeId = 1L;
+        String seller = "event.seller";
+        String buyer = "event.buyer";
+        Long tokenAmount = 100L;
+
+        log.info("[Trade 실패] 거래 번호: {}, 사유: {}", event.projectId, event.reason);
+
+        kafkaMessageProducer.sendTradeFailedEvent(tradeId, buyer, tokenAmount, seller, tokenAmount, event.reason);
     }
 }

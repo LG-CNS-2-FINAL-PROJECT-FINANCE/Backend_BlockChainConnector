@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
 jenkins:
   url: ${JENKINS_URL}
   job: ${JENKINS_JOB}
