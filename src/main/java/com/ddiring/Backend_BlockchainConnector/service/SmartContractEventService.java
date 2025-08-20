@@ -2,6 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestSucceededEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.trade.TradeSucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
@@ -118,12 +119,28 @@ public class SmartContractEventService {
     }
     
     private void handleTradeSuccess(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
+        // TODO: 실제 값으로 변경 필요
+        Long projectId = 1L;
+        String seller = "event.seller";
+        String buyer = "event.buyer";
+        Long tokenAmount = event.tokenAmount.longValue();
+
         log.info("[Trade 성공] 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}",
                 Arrays.toString(event.projectId),
                 event.seller,
                 event.buyer,
                 event.tokenAmount
         );
+
+        TradeSucceededEvent message = TradeSucceededEvent.of(
+                projectId,
+                buyer,
+                tokenAmount,
+                seller,
+                tokenAmount
+        );
+
+        kafkaMessageProducer.sendMessage(TradeSucceededEvent.TOPIC, message);
     }
 
     private void handleTradeFailure(FractionalInvestmentToken.TradeFailedEventResponse event) {
