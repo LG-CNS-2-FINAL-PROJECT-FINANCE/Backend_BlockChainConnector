@@ -3,13 +3,12 @@ package com.ddiring.Backend_BlockchainConnector.domain.event.investment;
 import lombok.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
-@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class InvestRequestAcceptedEvent {
+public class InvestRequestRejectedEvent {
     public static final String TOPIC = "INVESTMENT.REQUEST";
 
     // --- Header ---
@@ -18,28 +17,30 @@ public class InvestRequestAcceptedEvent {
     private Instant timestamp;
 
     // --- Payload ---
-    private InvestRequestAcceptedPayload payload;
+    private InvestRequestRejectedPayload payload;
 
     @Getter
     @Builder
-    @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
-    public static class InvestRequestAcceptedPayload {
+    public static class InvestRequestRejectedPayload {
         private Long investmentId;
         private String status;
+        private String reason;
     }
 
-    public static InvestRequestAcceptedEvent of(Long investmentId) {
+    public static InvestRequestRejectedEvent of(Long investmentId, String reason) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + ".ACCEPTED";
+        String eventType = TOPIC + ".REJECTED";
 
-        return InvestRequestAcceptedEvent.builder()
+        return InvestRequestRejectedEvent.builder()
                 .eventId(uuid)
                 .eventType(eventType)
                 .timestamp(Instant.now())
-                .payload(InvestRequestAcceptedPayload.builder()
+                .payload(InvestRequestRejectedPayload.builder()
                         .investmentId(investmentId)
-                        .status("ACCEPTED")
+                        .status("REJECTED")
+                        .reason(reason)
                         .build()
                 )
                 .build();
