@@ -29,10 +29,10 @@ public class DepositSucceededEvent {
         private Long sellId;
         private String status;
         private String sellerAddress;
-        private String sellerTokenAmount;
+        private Long sellerTokenAmount;
     }
 
-    public static DepositSucceededEvent of(Long sellId, String sellerAddress, String sellerTokenAmount) {
+    public static DepositSucceededEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".SUCCEEDED";
 

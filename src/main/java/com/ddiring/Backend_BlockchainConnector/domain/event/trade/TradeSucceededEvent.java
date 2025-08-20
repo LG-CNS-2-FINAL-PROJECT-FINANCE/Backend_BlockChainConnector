@@ -29,13 +29,13 @@ public class TradeSucceededEvent {
         private Long tradeId;
         private String status;
         private String buyerAddress;
-        private String buyerTokenAmount;
+        private Long buyerTokenAmount;
         private String sellerAddress;
-        private String sellerTokenAmount;
+        private Long sellerTokenAmount;
     }
 
-    public static TradeSucceededEvent of(Long tradeId, String buyerAddress, String buyerTokenAmount,
-                                          String sellerAddress, String sellerTokenAmount) {
+    public static TradeSucceededEvent of(Long tradeId, String buyerAddress, Long buyerTokenAmount,
+                                          String sellerAddress, Long sellerTokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".SUCCEEDED";
 

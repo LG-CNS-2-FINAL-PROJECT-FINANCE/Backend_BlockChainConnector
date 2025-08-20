@@ -29,11 +29,11 @@ public class DepositFailedEvent {
         private Long sellId;
         private String status;
         private String sellerAddress;
-        private String sellerTokenAmount;
+        private Long sellerTokenAmount;
         private String errorMessage;
     }
 
-    public static DepositFailedEvent of(Long sellId, String sellerAddress, String sellerTokenAmount, String errorMessage) {
+    public static DepositFailedEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".FAILED";
 

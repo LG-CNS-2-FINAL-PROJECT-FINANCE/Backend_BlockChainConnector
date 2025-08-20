@@ -29,14 +29,14 @@ public class TradeFailedEvent {
         private Long tradeId;
         private String status;
         private String buyerAddress;
-        private String buyerTokenAmount;
+        private Long buyerTokenAmount;
         private String sellerAddress;
-        private String sellerTokenAmount;
+        private Long sellerTokenAmount;
         private String errorMessage;
     }
 
-    public static TradeFailedEvent of(Long tradeId, String buyerAddress, String buyerTokenAmount,
-                                       String sellerAddress, String sellerTokenAmount, String errorMessage) {
+    public static TradeFailedEvent of(Long tradeId, String buyerAddress, Long buyerTokenAmount,
+                                       String sellerAddress, Long sellerTokenAmount, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".SUCCEEDED";
 
