@@ -5,8 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
-@Builder
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class InvestSucceededEvent {
@@ -15,7 +16,7 @@ public class InvestSucceededEvent {
     // --- Header ---
     private String eventId;
     private String eventType;
-    private String timestamp;
+    private LocalDateTime timestamp;
 
     // --- Payload ---
     private InvestSucceededPayload payload;
