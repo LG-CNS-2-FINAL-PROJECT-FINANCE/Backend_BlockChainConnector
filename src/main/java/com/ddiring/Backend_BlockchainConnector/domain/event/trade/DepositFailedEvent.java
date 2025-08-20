@@ -20,11 +20,33 @@ public class DepositFailedEvent {
 
     private DepositFailedPayload payload;
 
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class DepositFailedPayload {
         private Long sellId;
         private String status;
         private String sellerAddress;
         private String sellerTokenAmount;
         private String errorMessage;
+    }
+
+    public static DepositFailedEvent of(Long sellId, String sellerAddress, String sellerTokenAmount, String errorMessage) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return DepositFailedEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(DepositFailedPayload.builder()
+                        .sellId(sellId)
+                        .status("FAILED")
+                        .sellerAddress(sellerAddress)
+                        .sellerTokenAmount(sellerTokenAmount)
+                        .errorMessage(errorMessage)
+                        .build()
+                )
+                .build();
     }
 }

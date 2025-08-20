@@ -27,4 +27,19 @@ public class DeploySucceededEvent {
         private String projectId;
         private String status;
     }
+
+    public static DeploySucceededEvent of(String projectId) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return DeploySucceededEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(DeploySucceededPayload.builder()
+                        .projectId(projectId)
+                        .status("SUCCEEDED")
+                        .build()
+                )
+                .build();
+    }
 }

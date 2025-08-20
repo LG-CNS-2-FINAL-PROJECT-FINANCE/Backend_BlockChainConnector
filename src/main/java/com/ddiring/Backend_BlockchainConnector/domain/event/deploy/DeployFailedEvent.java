@@ -28,4 +28,20 @@ public class DeployFailedEvent {
         private String status;
         private String errorMessage;
     }
+
+    public static DeployFailedEvent of(String projectId, String errorMessage) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return DeployFailedEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(DeployFailedPayload.builder()
+                        .projectId(projectId)
+                        .status("FAILED")
+                        .errorMessage(errorMessage)
+                        .build()
+                )
+                .build();
+    }
 }

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
@@ -14,7 +16,7 @@ public class TradeRequestAcceptedEvent {
 
     private String eventId;
     private String eventType;
-    private String timestamp;
+    private LocalDateTime timestamp;
 
     private TradeRequestAcceptedPayload payload;
 
@@ -25,5 +27,20 @@ public class TradeRequestAcceptedEvent {
     public static class TradeRequestAcceptedPayload {
         private Long tradeId;
         private String status;
+    }
+
+    public static TradeRequestAcceptedEvent of(Long tradeId) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return TradeRequestAcceptedEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(TradeRequestAcceptedPayload.builder()
+                        .tradeId(tradeId)
+                        .status("ACCEPTED")
+                        .build()
+                )
+                .build();
     }
 }

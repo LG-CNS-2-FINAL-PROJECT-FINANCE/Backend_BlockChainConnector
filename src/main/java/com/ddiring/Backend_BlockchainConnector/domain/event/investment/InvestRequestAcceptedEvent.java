@@ -2,6 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.domain.event.investment;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
@@ -12,7 +14,7 @@ public class InvestRequestAcceptedEvent {
     // --- Header ---
     private String eventId;
     private String eventType;
-    private String timestamp;
+    private LocalDateTime timestamp;
 
     // --- Payload ---
     private InvestRequestAcceptedPayload payload;
@@ -24,5 +26,20 @@ public class InvestRequestAcceptedEvent {
     public static class InvestRequestAcceptedPayload {
         private Long investmentId;
         private String status;
+    }
+
+    public static InvestRequestAcceptedEvent of(Long investmentId) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return InvestRequestAcceptedEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(InvestRequestAcceptedPayload.builder()
+                        .investmentId(investmentId)
+                        .status("ACCEPTED")
+                        .build()
+                )
+                .build();
     }
 }

@@ -31,4 +31,17 @@ public class InvestSucceededEvent {
         private String investorAddress;
         private Long tokenAmount;
     }
+
+    public static InvestSucceededEvent of(Long investmentId, String investorAddress, Long tokenAmount) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        InvestSucceededPayload payload = InvestSucceededPayload.builder()
+                .investmentId(investmentId)
+                .status("SUCCEEDED")
+                .investorAddress(investorAddress)
+                .tokenAmount(tokenAmount)
+                .build();
+
+        return new InvestSucceededEvent(uuid, TOPIC, LocalDateTime.now(), payload);
+    }
 }

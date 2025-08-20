@@ -20,10 +20,31 @@ public class DepositSucceededEvent {
 
     private DepositSucceededPayload payload;
 
+    @Getter
+    @Builder
+    @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+    @AllArgsConstructor
     public static class DepositSucceededPayload {
         private Long sellId;
         private String status;
         private String sellerAddress;
         private String sellerTokenAmount;
+    }
+
+    public static DepositSucceededEvent of(Long sellId, String sellerAddress, String sellerTokenAmount) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return DepositSucceededEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(DepositSucceededPayload.builder()
+                        .sellId(sellId)
+                        .status("SUCCEEDED")
+                        .sellerAddress(sellerAddress)
+                        .sellerTokenAmount(sellerTokenAmount)
+                        .build()
+                )
+                .build();
     }
 }

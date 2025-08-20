@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
@@ -15,7 +17,7 @@ public class InvestFailedEvent {
     // --- Header ---
     private String eventId;
     private String eventType;
-    private String timestamp;
+    private LocalDateTime timestamp;
 
     // --- Payload ---
     private InvestFailedPayload payload;
@@ -30,5 +32,23 @@ public class InvestFailedEvent {
         private String investorAddress;
         private Long tokenAmount;
         private String errorMessage;
+    }
+
+    public static InvestFailedEvent of(Long investmentId, String investorAddress, Long tokenAmount, String errorMessage) {
+        String uuid = java.util.UUID.randomUUID().toString();
+
+        return InvestFailedEvent.builder()
+                .eventId(uuid)
+                .eventType(TOPIC)
+                .timestamp(LocalDateTime.now())
+                .payload(InvestFailedPayload.builder()
+                        .investmentId(investmentId)
+                        .status("FAILED")
+                        .investorAddress(investorAddress)
+                        .tokenAmount(tokenAmount)
+                        .errorMessage(errorMessage)
+                        .build()
+                )
+                .build();
     }
 }
