@@ -5,18 +5,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
+@Builder
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class InvestSucceededEvent {
-    public static final String TOPIC = "invest-succeeded";
+    public static final String TOPIC = "INVESTMENT";
 
     // --- Header ---
     private String eventId;
     private String eventType;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     // --- Payload ---
     private InvestSucceededPayload payload;
@@ -34,14 +36,19 @@ public class InvestSucceededEvent {
 
     public static InvestSucceededEvent of(Long investmentId, String investorAddress, Long tokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
+        String eventType = TOPIC + ".SUCCEEDED";
 
-        InvestSucceededPayload payload = InvestSucceededPayload.builder()
-                .investmentId(investmentId)
-                .status("SUCCEEDED")
-                .investorAddress(investorAddress)
-                .tokenAmount(tokenAmount)
+        return InvestSucceededEvent.builder()
+                .eventId(uuid)
+                .eventType(eventType)
+                .timestamp(Instant.now())
+                .payload(InvestSucceededPayload.builder()
+                        .investmentId(investmentId)
+                        .status("SUCCEEDED")
+                        .investorAddress(investorAddress)
+                        .tokenAmount(tokenAmount)
+                        .build()
+                )
                 .build();
-
-        return new InvestSucceededEvent(uuid, TOPIC, LocalDateTime.now(), payload);
     }
 }

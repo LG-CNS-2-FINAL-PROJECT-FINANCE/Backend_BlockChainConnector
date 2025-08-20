@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -12,11 +13,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class TradeSucceededEvent {
-    public static final String TOPIC = "trade-succeeded";
+    public static final String TOPIC = "TRADE";
 
     private String eventId;
     private String eventType;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     private TradeSucceededPayload payload;
 
@@ -36,11 +37,12 @@ public class TradeSucceededEvent {
     public static TradeSucceededEvent of(Long tradeId, String buyerAddress, String buyerTokenAmount,
                                           String sellerAddress, String sellerTokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
+        String eventType = TOPIC + ".SUCCEEDED";
 
         return TradeSucceededEvent.builder()
                 .eventId(uuid)
-                .eventType(TOPIC)
-                .timestamp(LocalDateTime.now())
+                .eventType(eventType)
+                .timestamp(Instant.now())
                 .payload(TradeSucceededPayload.builder()
                         .tradeId(tradeId)
                         .status("SUCCEEDED")

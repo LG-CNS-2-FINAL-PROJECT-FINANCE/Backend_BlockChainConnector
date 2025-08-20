@@ -2,6 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.domain.event.deploy;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -9,12 +10,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DeploySucceededEvent {
-    public static final String TOPIC = "deploy-succeeded";
+    public static final String TOPIC = "DEPLOY";
 
     // --- Header ---
     private String eventId;
     private String eventType;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     // --- Payload ---
     private DeploySucceededPayload payload;
@@ -30,11 +31,12 @@ public class DeploySucceededEvent {
 
     public static DeploySucceededEvent of(String projectId) {
         String uuid = java.util.UUID.randomUUID().toString();
+        String eventType = TOPIC + ".SUCCEEDED";
 
         return DeploySucceededEvent.builder()
                 .eventId(uuid)
-                .eventType(TOPIC)
-                .timestamp(LocalDateTime.now())
+                .eventType(eventType)
+                .timestamp(Instant.now())
                 .payload(DeploySucceededPayload.builder()
                         .projectId(projectId)
                         .status("SUCCEEDED")

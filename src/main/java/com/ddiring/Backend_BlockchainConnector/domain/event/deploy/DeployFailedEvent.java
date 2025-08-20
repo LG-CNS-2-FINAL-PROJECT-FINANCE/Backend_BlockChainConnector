@@ -2,6 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.domain.event.deploy;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -9,12 +10,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DeployFailedEvent {
-    public static final String TOPIC = "deploy-failed";
+    public static final String TOPIC = "DEPLOY";
 
     // --- Header ---
     private String eventId;
     private String eventType;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     // --- Payload ---
     private DeployFailedPayload payload;
@@ -31,11 +32,12 @@ public class DeployFailedEvent {
 
     public static DeployFailedEvent of(String projectId, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
+        String eventType = TOPIC + ".FAILED";
 
         return DeployFailedEvent.builder()
                 .eventId(uuid)
-                .eventType(TOPIC)
-                .timestamp(LocalDateTime.now())
+                .eventType(eventType)
+                .timestamp(Instant.now())
                 .payload(DeployFailedPayload.builder()
                         .projectId(projectId)
                         .status("FAILED")
