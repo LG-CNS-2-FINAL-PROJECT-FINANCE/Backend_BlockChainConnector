@@ -15,7 +15,9 @@ public class SmartContractDeployResultDto {
     @NotBlank(message = "스마트 컨트랙트 주소를 입력하시오.")
     private String address;
 
+    @NotBlank(message = "트랜잭션 해시를 입력하시오.")
+    private String transactionHash;
+
     @NotBlank(message = "배포 파이프라인 응답 결과를 입력하시오.")
     private String status;
-
 }
