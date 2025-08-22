@@ -21,23 +21,52 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SmartContractEventService {
     private final KafkaMessageProducer kafkaMessageProducer;
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
+    private final Map<EventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(EventType.class);
 
     private final ContractWrapper contractWrapper;
 
     @PostConstruct
-    public void setupAllEventFilters() {
-        // TODO: DB에서 계약 주소를 조회하는 로직 추가
-        // 예시로 하드코딩된 계약 주소를 사용합니다.
-        // Dto 구성 必 -> { 컨트랙트 주소, 마지막 블록 번호, 컨트랙트 상태 등 }
-        List<String> contractAddresses = List.of("0xf01ce1e10d3b282f75ba96e8dd259d6de5941b33");
+    public void init() {
+        initEventFunctionMap();
 
-        for (String address : contractAddresses) {
-            setupEventFilter(address);
+        List<SmartContract> smartContractList = smartContractRepository.findAllByIsActive(true);
+        for (SmartContract contract : smartContractList) {
+            setupAllEventFilter(contract);
         }
     }
 
     public void addEventFilter(String contractAddress) {
         // TODO: DB 에서 계약이 유효한지 확인하는 로직 추가
+    private void initEventFunctionMap() {
+        eventFunctionMap.put(
+                EventType.INVESTMENT_SUCCESSFUL,
+                new EventFunctionMapping(
+                        "investmentSuccessfulEventFlowable",
+                        event -> handleInvestmentSuccessful((FractionalInvestmentToken.InvestmentSuccessfulEventResponse) event)
+                )
+        );
+        eventFunctionMap.put(
+                EventType.INVESTMENT_FAILED,
+                new EventFunctionMapping(
+                        "investmentFailedEventFlowable",
+                        event -> handleInvestmentFailed((FractionalInvestmentToken.InvestmentFailedEventResponse) event)
+                )
+        );
+        eventFunctionMap.put(
+                EventType.TRADE_SUCCESSFUL,
+                new EventFunctionMapping(
+                        "tradeSuccessfulEventFlowable",
+                        event -> handleTradeSuccessful((FractionalInvestmentToken.TradeSuccessfulEventResponse) event)
+                )
+        );
+        eventFunctionMap.put(
+                EventType.TRADE_FAILED,
+                new EventFunctionMapping(
+                        "tradeFailedEventFlowable",
+                        event -> handleTradeFailed((FractionalInvestmentToken.TradeFailedEventResponse) event)
+                )
+        );
+    }
 
         // TODO: 중복 체크 로직 추가
         if (activeDisposables.containsKey(contractAddress)) {
