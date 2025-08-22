@@ -14,7 +14,7 @@ import java.util.Arrays;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EventProcessorService {
+public class SmartContractEventProcessorService {
     private final EventTrackerRepository eventTrackerRepository;
     private final KafkaMessageProducer kafkaMessageProducer;
 

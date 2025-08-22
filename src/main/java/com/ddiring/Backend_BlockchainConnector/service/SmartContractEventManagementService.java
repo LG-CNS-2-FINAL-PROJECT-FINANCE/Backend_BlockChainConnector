@@ -4,7 +4,6 @@ import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.EventType;
 import com.ddiring.Backend_BlockchainConnector.domain.records.EventFunctionMapping;
-import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
@@ -26,15 +25,12 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SmartContractEventService {
-    private final KafkaMessageProducer kafkaMessageProducer;
-    private final EventProcessorService eventProcessorService;
+public class SmartContractEventManagementService {
+    private final SmartContractEventProcessorService eventProcessorService;
 
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
     private final Map<EventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(EventType.class);

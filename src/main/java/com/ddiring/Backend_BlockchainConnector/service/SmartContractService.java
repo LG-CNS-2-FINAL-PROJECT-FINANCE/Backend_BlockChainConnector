@@ -2,13 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
-import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestAcceptedEvent;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
-import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
-import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +24,7 @@ import java.util.Map;
 public class SmartContractService {
     private final ContractWrapper contractWrapper;
     private final KafkaMessageProducer kafkaMessageProducer;
-    private final SmartContractEventService smartContractEventService;
+    private final SmartContractEventManagementService eventManagementService;
 
     private final RemoteJenkinsService remoteJenkinsService;
 
@@ -86,7 +81,7 @@ public class SmartContractService {
             EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
             TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt().orElseThrow();
 
-            smartContractEventService.addSmartContract(
+            eventManagementService.addSmartContract(
                 resultDto.getProjectId(),
                 resultDto.getAddress(),
                 transactionReceipt.getBlockNumber()
