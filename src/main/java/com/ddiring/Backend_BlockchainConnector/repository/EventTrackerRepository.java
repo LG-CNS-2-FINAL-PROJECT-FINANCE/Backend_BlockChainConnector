@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface EventTrackerRepository extends JpaRepository<EventTracker,Long> {
     List<EventTracker> findAllBySmartContractId_SmartContractId(Long smartContractId);
+
+    EventTracker findBySmartContractId_SmartContractAddress(String smartContractAddress);
 }

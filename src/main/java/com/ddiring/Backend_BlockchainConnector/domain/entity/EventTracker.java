@@ -29,4 +29,8 @@ public class EventTracker {
 
     @Column(name = "last_block_number", nullable = false)
     private BigInteger lastBlockNumber;
+
+    public void updateBlockNumber(BigInteger blockNumber) {
+        lastBlockNumber = blockNumber;
+    }
 }
