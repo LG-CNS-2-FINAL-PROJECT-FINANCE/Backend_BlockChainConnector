@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -27,9 +29,9 @@ import java.util.Map;
 public class SmartContractService {
     private final ContractWrapper contractWrapper;
     private final KafkaMessageProducer kafkaMessageProducer;
+    private final SmartContractEventService smartContractEventService;
 
     private final RemoteJenkinsService remoteJenkinsService;
-    private final RemoteProductService remoteProductService;
 
     private final JenkinsProperties jenkinsProperties;
 
@@ -77,8 +79,20 @@ public class SmartContractService {
             kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
             return;
         }
+
         try {
             log.info("스마트 컨트랙트 배포 성공: {}", resultDto.getAddress());
+
+            EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
+            TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt().orElseThrow();
+            BigInteger blockNumber = transactionReceipt.getBlockNumber();
+
+            smartContractEventService.addSmartContract(
+                resultDto.getProjectId(),
+                resultDto.getAddress(),
+                blockNumber
+            );
+
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
         } catch (Exception e) {
             log.error("예상치 못한 에러로 인한 배포 실패: {}", e.getMessage());
