@@ -2,6 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.domain.enums;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+
 @Getter
 public enum EventErrorType {
     REPEAT_FAILED(0L),
@@ -15,4 +17,10 @@ public enum EventErrorType {
         this.errorType = errorType;
     }
 
+    public static EventErrorType fromValue(Long value) {
+        return Arrays.stream(EventErrorType.values())
+                .filter(type -> type.getErrorType().equals(value))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Invalid errorType value: " + value));
+    }
 }
