@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EventTransactionLogRepository extends JpaRepository<EventTransactionLog, Long> {
+    Boolean existsByTransactionHash(String transactionHash);
 }
