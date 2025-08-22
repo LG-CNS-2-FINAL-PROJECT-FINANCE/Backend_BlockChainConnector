@@ -34,6 +34,8 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class SmartContractEventService {
     private final KafkaMessageProducer kafkaMessageProducer;
+    private final EventProcessorService eventProcessorService;
+
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
     private final Map<EventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(EventType.class);
 
@@ -57,28 +59,28 @@ public class SmartContractEventService {
                 EventType.INVESTMENT_SUCCESSFUL,
                 new EventFunctionMapping(
                         "investmentSuccessfulEventFlowable",
-                        event -> handleInvestmentSuccessful((FractionalInvestmentToken.InvestmentSuccessfulEventResponse) event)
+                        event -> eventProcessorService.handleInvestmentSuccessful((FractionalInvestmentToken.InvestmentSuccessfulEventResponse) event)
                 )
         );
         eventFunctionMap.put(
                 EventType.INVESTMENT_FAILED,
                 new EventFunctionMapping(
                         "investmentFailedEventFlowable",
-                        event -> handleInvestmentFailed((FractionalInvestmentToken.InvestmentFailedEventResponse) event)
+                        event -> eventProcessorService.handleInvestmentFailed((FractionalInvestmentToken.InvestmentFailedEventResponse) event)
                 )
         );
         eventFunctionMap.put(
                 EventType.TRADE_SUCCESSFUL,
                 new EventFunctionMapping(
                         "tradeSuccessfulEventFlowable",
-                        event -> handleTradeSuccessful((FractionalInvestmentToken.TradeSuccessfulEventResponse) event)
+                        event -> eventProcessorService.handleTradeSuccessful((FractionalInvestmentToken.TradeSuccessfulEventResponse) event)
                 )
         );
         eventFunctionMap.put(
                 EventType.TRADE_FAILED,
                 new EventFunctionMapping(
                         "tradeFailedEventFlowable",
-                        event -> handleTradeFailed((FractionalInvestmentToken.TradeFailedEventResponse) event)
+                        event -> eventProcessorService.handleTradeFailed((FractionalInvestmentToken.TradeFailedEventResponse) event)
                 )
         );
     }
@@ -255,58 +257,5 @@ public class SmartContractEventService {
             log.error("[InvocationTargetException] {}", e.getMessage());
             return null;
         }
-    }
-
-    private void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
-        Long investmentId = 1L; // TODO: 실제 투자 ID로 변경 필요
-        String buyerAddress = event.buyer;
-        Long tokenAmount = event.tokenAmount.longValue();
-
-        log.info("[Investment 성공] 투자 번호 : {}, 투자자: {}, 금액: {}",
-                investmentId,
-                buyerAddress,
-                tokenAmount
-        );
-
-        kafkaMessageProducer.sendInvestSucceededEvent(investmentId, buyerAddress, tokenAmount);
-    }
-
-    private void handleInvestmentFailed(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
-        Long investmentId = 1L; // TODO: 실제 투자 ID로 변경 필요
-        String buyerAddress = "event.buyer"; // TODO: 실제 구매자 주소로 변경 필요
-        Long tokenAmount = 1000L; // TODO: 실제 투자 금액으로 변경 필요
-
-        log.info("[Investment 실패] 프로젝트 번호 : {}, 사유: {}", event.projectId, event.reason);
-
-        kafkaMessageProducer.sendInvestFailedEvent(investmentId, buyerAddress, tokenAmount, event.reason);
-    }
-
-    private void handleTradeSuccessful(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
-        // TODO: 실제 값으로 변경 필요
-        Long tradeId = 1L;
-        String seller = "event.seller";
-        String buyer = "event.buyer";
-        Long tokenAmount = event.tokenAmount.longValue();
-
-        log.info("[Trade 성공] 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}",
-                Arrays.toString(event.projectId),
-                event.seller,
-                event.buyer,
-                event.tokenAmount
-        );
-
-        kafkaMessageProducer.sendTradeSucceededEvent(tradeId, buyer, tokenAmount, seller, tokenAmount);
-    }
-
-    private void handleTradeFailed(FractionalInvestmentToken.TradeFailedEventResponse event) {
-        // TODO: 실제 값으로 변경 필요
-        Long tradeId = 1L;
-        String seller = "event.seller";
-        String buyer = "event.buyer";
-        Long tokenAmount = 100L;
-
-        log.info("[Trade 실패] 거래 번호: {}, 사유: {}", event.projectId, event.reason);
-
-        kafkaMessageProducer.sendTradeFailedEvent(tradeId, buyer, tokenAmount, seller, tokenAmount, event.reason);
     }
 }
