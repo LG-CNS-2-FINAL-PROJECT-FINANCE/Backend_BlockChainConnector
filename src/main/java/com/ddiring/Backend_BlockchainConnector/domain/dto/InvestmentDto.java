@@ -14,8 +14,8 @@ public class InvestmentDto {
     @Positive(message = "투자 아이디는 양수로 구성되어야 합니다.")
     private Long investmentId;
 
-    @NotBlank(message = "스마트 컨트랙트 주소를 입력하시오.")
-    private String smartContractAddress;
+    @NotBlank(message = "프로젝트 아이디를 입력하시오.")
+    private String projectId;
 
     @NotBlank(message = "투자자 지갑 주소를 입력하시오.")
     private String investorAddress;
