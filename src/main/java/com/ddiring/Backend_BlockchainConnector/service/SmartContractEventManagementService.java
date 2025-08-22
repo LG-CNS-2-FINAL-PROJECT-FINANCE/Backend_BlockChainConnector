@@ -135,6 +135,9 @@ public class SmartContractEventManagementService {
             setupAllEventFilter(contract);
         } catch (Exception e) {
             log.error("[스마트 컨트랙트 등록 실패] {}", e.getMessage());
+
+            removeAllEventFilter(smartContractAddress);
+
             throw new RuntimeException("[스마트 컨트랙트 등록 실패] " + e.getMessage());
         }
     }
@@ -162,14 +165,7 @@ public class SmartContractEventManagementService {
         contract.deactivate();
         smartContractRepository.save(contract);
 
-        // 계약의 모든 이벤트 필터 제거
-        List<Disposable> disposables = activeDisposables.remove(contract.getSmartContractAddress());
-        log.info("Removing event filters for contract: {}", contract.getSmartContractAddress());
-        for (Disposable disposable : disposables) {
-            if (!disposable.isDisposed()) {
-                disposable.dispose();
-            }
-        }
+        removeAllEventFilter(contract.getSmartContractAddress());
     }
 
     private void setupAllEventFilter(SmartContract contract) {
@@ -195,13 +191,13 @@ public class SmartContractEventManagementService {
             EventType eventType = eventTracker.getEventType();
             if (eventType == null) {
                 log.error("유효하지 않은 이벤트 타입입니다.");
-                return;
+                throw new IllegalArgumentException("유효하지 않은 이벤트 타입입니다.");
             }
 
             BigInteger startBlockNumber = eventTracker.getLastBlockNumber();
             if (startBlockNumber == null || startBlockNumber.compareTo(BigInteger.ZERO) < 0) {
                 log.error("유효하지 않은 시작 블록 번호입니다: {}", startBlockNumber);
-                return;
+                throw new IllegalArgumentException("유효하지 않은 시작 블록 번호입니다: {}" + startBlockNumber);
             }
 
             log.info("Setting up event filter for contract: {}, event: {}, startBlockNumber: {}",
@@ -210,15 +206,13 @@ public class SmartContractEventManagementService {
             Disposable disposable = setEventFilter(myContract, eventType, startBlockNumber);
             if (disposable == null) {
                 log.error("이벤트 필터 설정 실패: {} for contract: {}", eventType, contract.getSmartContractAddress());
-                return;
+                throw new RuntimeException("이벤트 필터 설정 실패 : " + eventType);
             }
 
             disposables.add(disposable);
         });
 
         log.info("모든 이벤트 필터가 설정되었습니다: {}", contract.getSmartContractAddress());
-
-        activeDisposables.put(contract.getSmartContractAddress(), disposables);
     }
 
     private Disposable setEventFilter(FractionalInvestmentToken contract, EventType eventType, BigInteger startBlockNumber) {
@@ -252,6 +246,16 @@ public class SmartContractEventManagementService {
         } catch (InvocationTargetException e) {
             log.error("[InvocationTargetException] {}", e.getMessage());
             return null;
+        }
+    }
+
+    private void removeAllEventFilter(String smartContractAddress) {
+        List<Disposable> disposables = activeDisposables.remove(smartContractAddress);
+        log.info("Removing event filters for contract: {}", smartContractAddress);
+        for (Disposable disposable : disposables) {
+            if (!disposable.isDisposed()) {
+                disposable.dispose();
+            }
         }
     }
 }
