@@ -85,12 +85,11 @@ public class SmartContractService {
 
             EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
             TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt().orElseThrow();
-            BigInteger blockNumber = transactionReceipt.getBlockNumber();
 
             smartContractEventService.addSmartContract(
                 resultDto.getProjectId(),
                 resultDto.getAddress(),
-                blockNumber
+                transactionReceipt.getBlockNumber()
             );
 
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
