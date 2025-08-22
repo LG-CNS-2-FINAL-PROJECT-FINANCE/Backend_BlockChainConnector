@@ -100,9 +100,9 @@ public class SmartContractEventProcessorService {
                 .errorReason(event.reason)
                 .build();
 
-        kafkaMessageProducer.sendInvestFailedEvent(investmentId, buyerAddress, tokenAmount, event.reason);
         eventTransactionLogRepository.save(eventTransactionLog);
 
+        kafkaMessageProducer.sendInvestFailedEvent(investmentId,eventTransactionLog.getEventType().name(), event.reason);
     }
 
     @Transactional
@@ -177,6 +177,6 @@ public class SmartContractEventProcessorService {
 
         eventTransactionLogRepository.save(eventTransactionLog);
 
-        kafkaMessageProducer.sendTradeFailedEvent(tradeId, buyer, tokenAmount, seller, tokenAmount, event.reason);
+        kafkaMessageProducer.sendTradeFailedEvent(tradeId, eventTransactionLog.getErrorType().name(), event.reason);
     }
 }
