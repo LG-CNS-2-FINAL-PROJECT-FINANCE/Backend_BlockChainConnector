@@ -91,7 +91,7 @@ public class SmartContractTradeService {
         .thenAccept(response -> {
             // TODO; 거래 성공 후 처리 로직 추가
             // 예: 거래 성공 이벤트 발생, DB 업데이트 등
-            log.info("[Smart Contract] 거래 성공: {}", response);
+            log.info("[Smart Contract] 예금 성공: {}", response);
             kafkaMessageProducer.sendDepositSucceededEvent(
                     depositDto.getSellId(),
                     depositDto.getSellerAddress(),
