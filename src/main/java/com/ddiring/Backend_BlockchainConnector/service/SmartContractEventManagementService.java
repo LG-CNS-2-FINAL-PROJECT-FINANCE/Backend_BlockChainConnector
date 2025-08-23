@@ -229,6 +229,8 @@ public class SmartContractEventManagementService {
                     DefaultBlockParameterName.LATEST
             )).subscribe(event -> {
                 eventFunctionMap.get(eventType).eventHandlerMethod().accept((BaseEventResponse) event);
+            }, throwable -> {
+                log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage());
             });
 
         } catch (NoSuchMethodException e) {
