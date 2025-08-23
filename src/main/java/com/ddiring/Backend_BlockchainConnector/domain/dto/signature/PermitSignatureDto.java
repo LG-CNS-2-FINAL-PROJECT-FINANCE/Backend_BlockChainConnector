@@ -22,7 +22,7 @@ public class PermitSignatureDto {
     @AllArgsConstructor
     public static class Request {
         @NotBlank
-        private String smartContractAddress;
+        private String projectId;
 
         @NotBlank
         private String userAddress;

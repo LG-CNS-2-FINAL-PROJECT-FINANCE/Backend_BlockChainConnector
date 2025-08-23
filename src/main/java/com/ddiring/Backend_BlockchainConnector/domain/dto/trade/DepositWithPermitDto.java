@@ -15,7 +15,7 @@ import java.math.BigInteger;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class DepositWithPermitDto {
     @NotBlank
-    private String smartContractAddress;
+    private String projectId;
 
     @NotNull
     private Long sellId;

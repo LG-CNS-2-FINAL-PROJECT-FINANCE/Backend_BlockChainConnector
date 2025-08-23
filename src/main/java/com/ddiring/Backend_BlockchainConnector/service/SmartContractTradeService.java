@@ -1,13 +1,17 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.domain.PermitSignatureDomain;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.message.PermitSignatureMessage;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
+import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +27,16 @@ public class SmartContractTradeService {
     private final ContractWrapper contractWrapper;
     private final KafkaMessageProducer kafkaMessageProducer;
 
+    private final SmartContractRepository smartContractRepository;
+
+    @Transactional
     public PermitSignatureDto.Response getSignature(@Valid PermitSignatureDto.Request permitSignatureDto) {
         try {
+            SmartContract contractInfo = smartContractRepository.findByProjectId(permitSignatureDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+
             FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    permitSignatureDto.getSmartContractAddress(),
+                    contractInfo.getSmartContractAddress(),
                     contractWrapper.getWeb3j(),
                     contractWrapper.getCredentials(),
                     contractWrapper.getGasProvider()
@@ -48,12 +58,12 @@ public class SmartContractTradeService {
                         .name(smartContractName)
                         .version(smartContractVersion)
                         .chainId(chainId)
-                        .verifyingContract(permitSignatureDto.getSmartContractAddress())
+                        .verifyingContract(contractInfo.getSmartContractAddress())
                         .build()
                 )
                 .message(PermitSignatureMessage.builder()
                         .owner(permitSignatureDto.getUserAddress())
-                        .spender(permitSignatureDto.getSmartContractAddress())
+                        .spender(contractInfo.getSmartContractAddress())
                         .value(tokenAmountWei)
                         .nonce(nonce)
                         .deadline(deadline)
@@ -66,81 +76,95 @@ public class SmartContractTradeService {
     }
 
     public void deposit(DepositWithPermitDto depositDto) {
-        FractionalInvestmentToken smartContract;
         try {
-            smartContract = FractionalInvestmentToken.load(
-                    depositDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-        } catch (Exception e) {
-            log.error("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : {}", e.getMessage());
-            throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
-        }
+            SmartContract contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-        smartContract.depositWithPermit(
-            depositDto.getSellId().toString(),
-            depositDto.getSellerAddress(),
-            depositDto.getTokenAmount(),
-            depositDto.getDeadline(),
-            BigInteger.valueOf(depositDto.getV()),
-            Numeric.hexStringToByteArray(depositDto.getR()),
-            Numeric.hexStringToByteArray(depositDto.getS())
-        ).sendAsync()
-        .thenAccept(response -> {
-            // TODO; 거래 성공 후 처리 로직 추가
-            // 예: 거래 성공 이벤트 발생, DB 업데이트 등
-            log.info("[Smart Contract] 거래 성공: {}", response);
-            kafkaMessageProducer.sendDepositSucceededEvent(
-                    depositDto.getSellId(),
-                    depositDto.getSellerAddress(),
-                    depositDto.getTokenAmount().longValue()
-            );
-        })
-        .exceptionally(throwable -> {
-            log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
-            kafkaMessageProducer.sendDepositFailedEvent(
-                    depositDto.getSellId(),
-                    depositDto.getSellerAddress(),
-                    depositDto.getTokenAmount().longValue(),
-                    throwable.getMessage()
-            );
-            return null;
-        });
+            FractionalInvestmentToken smartContract;
+            try {
+                smartContract = FractionalInvestmentToken.load(
+                        contractInfo.getSmartContractAddress(),
+                        contractWrapper.getWeb3j(),
+                        contractWrapper.getCredentials(),
+                        contractWrapper.getGasProvider()
+                );
+            } catch (Exception e) {
+                log.error("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : {}", e.getMessage());
+                throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
+            }
+
+            smartContract.depositWithPermit(
+                            depositDto.getSellId().toString(),
+                            depositDto.getSellerAddress(),
+                            depositDto.getTokenAmount(),
+                            depositDto.getDeadline(),
+                            BigInteger.valueOf(depositDto.getV()),
+                            Numeric.hexStringToByteArray(depositDto.getR()),
+                            Numeric.hexStringToByteArray(depositDto.getS())
+                    ).sendAsync()
+                    .thenAccept(response -> {
+                        // TODO; 거래 성공 후 처리 로직 추가
+                        // 예: 거래 성공 이벤트 발생, DB 업데이트 등
+                        log.info("[Smart Contract] 예금 성공: {}", response);
+                        kafkaMessageProducer.sendDepositSucceededEvent(
+                                depositDto.getSellId(),
+                                depositDto.getSellerAddress(),
+                                depositDto.getTokenAmount().longValue()
+                        );
+                    })
+                    .exceptionally(throwable -> {
+                        log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
+                        kafkaMessageProducer.sendDepositFailedEvent(
+                                depositDto.getSellId(),
+                                depositDto.getSellerAddress(),
+                                depositDto.getTokenAmount().longValue(),
+                                throwable.getMessage()
+                        );
+                        return null;
+                    });
+        } catch (RuntimeException e) {
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+        }
     }
 
     public void trade(TradeDto tradeDto) {
-        FractionalInvestmentToken smartContract;
         try {
-            smartContract = FractionalInvestmentToken.load(
-                    tradeDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-        } catch (Exception e) {
-            throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
+            SmartContract contractInfo = smartContractRepository.findByProjectId(tradeDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+
+            FractionalInvestmentToken smartContract;
+            try {
+                smartContract = FractionalInvestmentToken.load(
+                        contractInfo.getSmartContractAddress(),
+                        contractWrapper.getWeb3j(),
+                        contractWrapper.getCredentials(),
+                        contractWrapper.getGasProvider()
+                );
+            } catch (Exception e) {
+                throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
+            }
+
+            smartContract.requestTrade(
+                            tradeDto.getTradeId().toString(),
+                            tradeDto.getSellInfo().getSellId().toString(),
+                            tradeDto.getSellInfo().getSellerAddress(),
+                            BigInteger.valueOf(tradeDto.getSellInfo().getTokenAmount()),
+                            tradeDto.getBuyInfo().getBuyId().toString(),
+                            tradeDto.getBuyInfo().getBuyerAddress(),
+                            BigInteger.valueOf(tradeDto.getBuyInfo().getTokenAmount())
+                    ).sendAsync()
+                    .thenAccept(response -> {
+                        log.info("[Smart Contract] 거래 요청 성공: {}", response);
+                        kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
+                    })
+                    .exceptionally(throwable -> {
+                        log.error("[Smart Contract] 거래 요청 중 에러 발생: {}", throwable.getMessage());
+                        kafkaMessageProducer.sendTradeRequestRejectedEvent(tradeDto.getTradeId(), throwable.getMessage());
+                        return null;
+                    });
+
+        } catch (RuntimeException e) {
+            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
         }
-
-        smartContract.requestTrade(
-            tradeDto.getTradeId().toString(),
-            tradeDto.getSellInfo().getSellId().toString(),
-            tradeDto.getSellInfo().getSellerAddress(),
-            BigInteger.valueOf(tradeDto.getSellInfo().getTokenAmount()),
-            tradeDto.getBuyInfo().getBuyId().toString(),
-            tradeDto.getBuyInfo().getBuyerAddress(),
-            BigInteger.valueOf(tradeDto.getBuyInfo().getTokenAmount())
-        ).sendAsync()
-        .thenAccept(response -> {
-            log.info("[Smart Contract] 거래 요청 성공: {}", response);
-            kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
-        })
-        .exceptionally(throwable -> {
-            log.error("[Smart Contract] 거래 요청 중 에러 발생: {}", throwable.getMessage());
-            kafkaMessageProducer.sendTradeRequestRejectedEvent(tradeDto.getTradeId(), throwable.getMessage());
-            return null;
-        });
-
     }
 }

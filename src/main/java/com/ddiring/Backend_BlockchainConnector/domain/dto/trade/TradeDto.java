@@ -14,8 +14,8 @@ public class TradeDto {
     @Positive(message = "거래 번호는 양수여야 합니다.")
     private Long tradeId;
 
-    @NotBlank(message = "사용자 주소는 필수입니다.")
-    private String smartContractAddress;
+    @NotBlank(message = "프로젝트 아이디는 필수입니다.")
+    private String projectId;
 
     @NotNull
     private BuyInfo buyInfo;

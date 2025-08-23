@@ -12,8 +12,8 @@ public class BalanceDto {
     @Getter
     @Builder
     public static class Request {
-        @NotBlank(message = "스마트 컨트랙트 주소를 입력하세요.")
-        private String smartContractAddress;
+        @NotBlank(message = "프로젝트 아이디를 입력하세요.")
+        private String projectId;
         @NotBlank(message = "조회할 사용자 지갑 주소를 입력하세요.")
         private String userAddress;
     }

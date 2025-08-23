@@ -1,20 +1,20 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
+import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
-import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
-import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestAcceptedEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
-import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteProductService;
-import com.ddiring.Backend_BlockchainConnector.remote.deploy.dto.UpdateContractAddressDto;
+import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -27,9 +27,10 @@ import java.util.Map;
 public class SmartContractService {
     private final ContractWrapper contractWrapper;
     private final KafkaMessageProducer kafkaMessageProducer;
+    private final SmartContractEventManagementService eventManagementService;
+    private final SmartContractRepository smartContractRepository;
 
     private final RemoteJenkinsService remoteJenkinsService;
-    private final RemoteProductService remoteProductService;
 
     private final JenkinsProperties jenkinsProperties;
 
@@ -77,8 +78,19 @@ public class SmartContractService {
             kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
             return;
         }
+
         try {
             log.info("스마트 컨트랙트 배포 성공: {}", resultDto.getAddress());
+
+            EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
+            TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt().orElseThrow();
+
+            eventManagementService.addSmartContract(
+                resultDto.getProjectId(),
+                resultDto.getAddress(),
+                transactionReceipt.getBlockNumber()
+            );
+
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
         } catch (Exception e) {
             log.error("예상치 못한 에러로 인한 배포 실패: {}", e.getMessage());
@@ -87,42 +99,51 @@ public class SmartContractService {
     }
 
     public void investment(InvestmentDto investmentDto) {
-        FractionalInvestmentToken smartContract;
-
-        // 동기 처리
         try {
-            smartContract = FractionalInvestmentToken.load(
-                    investmentDto.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
-        } catch (Exception e) {
-            log.error("스마트 컨트랙트 로딩 에러: {}", e.getMessage());
-            throw new RuntimeException("스마트 컨트랙트 로딩 에러: {}" + e.getMessage());
-        }
+            SmartContract contractInfo = smartContractRepository.findByProjectId(investmentDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-        // 비동기 처리
-        smartContract.requestInvestment(
-            investmentDto.getInvestmentId().toString(),
-            investmentDto.getInvestorAddress(),
-            BigInteger.valueOf(investmentDto.getTokenAmount())
-        ).sendAsync()
-        .thenAccept(response -> {
-            log.info("Investment request successful: {}", response);
-            kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getInvestmentId());
-        })
-        .exceptionally(throwable -> {
-            log.error("Investment request Error: {}", throwable.getMessage());
-            kafkaMessageProducer.sendInvestRequestRejectedEvent(investmentDto.getInvestmentId(), throwable.getMessage());
-            return null;
-        });
+            // 동기 처리
+            FractionalInvestmentToken smartContract;
+            try {
+                smartContract = FractionalInvestmentToken.load(
+                        contractInfo.getSmartContractAddress(),
+                        contractWrapper.getWeb3j(),
+                        contractWrapper.getCredentials(),
+                        contractWrapper.getGasProvider()
+                );
+            } catch (Exception e) {
+                log.error("스마트 컨트랙트 로딩 에러: {}", e.getMessage());
+                throw new RuntimeException("스마트 컨트랙트 로딩 에러: {}" + e.getMessage());
+            }
+
+            // 비동기 처리
+            smartContract.requestInvestment(
+                            investmentDto.getInvestmentId().toString(),
+                            investmentDto.getInvestorAddress(),
+                            BigInteger.valueOf(investmentDto.getTokenAmount())
+                    ).sendAsync()
+                    .thenAccept(response -> {
+                        log.info("Investment request successful: {}", response);
+                        kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getInvestmentId());
+                    })
+                    .exceptionally(throwable -> {
+                        log.error("Investment request Error: {}", throwable.getMessage());
+                        kafkaMessageProducer.sendInvestRequestRejectedEvent(investmentDto.getInvestmentId(), throwable.getMessage());
+                        return null;
+                    });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
         try {
+            SmartContract contractInfo = smartContractRepository.findByProjectId(balanceDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+
             FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    balanceDto.getSmartContractAddress(),
+                    contractInfo.getSmartContractAddress(),
                     contractWrapper.getWeb3j(),
                     contractWrapper.getCredentials(),
                     contractWrapper.getGasProvider()

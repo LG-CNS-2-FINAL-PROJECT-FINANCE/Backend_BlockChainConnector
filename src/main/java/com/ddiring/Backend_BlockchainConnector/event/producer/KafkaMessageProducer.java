@@ -52,8 +52,8 @@ public class KafkaMessageProducer {
         sendMessage(InvestSucceededEvent.TOPIC, message);
     }
 
-    public void sendInvestFailedEvent(Long investmentId, String buyerAddress, long tokenAmount, String errorMessage) {
-        InvestFailedEvent message = InvestFailedEvent.of(investmentId, buyerAddress, tokenAmount, errorMessage);
+    public void sendInvestFailedEvent(Long investmentId, String errorType, String errorMessage) {
+        InvestFailedEvent message = InvestFailedEvent.of(investmentId, errorType, errorMessage);
         log.info("Sending InvestFailedEvent to topic {}: {}", InvestFailedEvent.TOPIC, message);
         sendMessage(InvestFailedEvent.TOPIC, message);
     }
@@ -88,8 +88,8 @@ public class KafkaMessageProducer {
         sendMessage(TradeSucceededEvent.TOPIC, message);
     }
 
-    public void sendTradeFailedEvent(Long tradeId, String buyerAddress, Long buyerTokenAmount, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
-        TradeFailedEvent message = TradeFailedEvent.of(tradeId, buyerAddress, buyerTokenAmount, sellerAddress, sellerTokenAmount, errorMessage);
+    public void sendTradeFailedEvent(Long tradeId, String errorType, String errorMessage) {
+        TradeFailedEvent message = TradeFailedEvent.of(tradeId, errorType, errorMessage);
         log.info("Sending TradeFailedEvent to topic {}: {}", TradeFailedEvent.TOPIC, message);
         sendMessage(TradeFailedEvent.TOPIC, message);
     }
