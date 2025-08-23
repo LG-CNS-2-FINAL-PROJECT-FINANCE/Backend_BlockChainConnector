@@ -11,11 +11,13 @@ import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProduc
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTransactionLogRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
+import com.ddiring.Backend_BlockchainConnector.utils.Byte32Converter;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -49,7 +51,7 @@ public class SmartContractEventProcessorService {
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
-        log.info("[Investment 성공] 프로젝트 번호: {}, 투자 번호 : {}, 투자자: {}, 금액: {}", event.projectId, investmentId, buyerAddress, tokenAmount);
+        log.info("[Investment 성공] 프로젝트 번호: {}, 투자 번호 : {}, 투자자: {}, 금액: {}", Byte32Converter.convertBytes32ToString(event.projectId), investmentId, buyerAddress, tokenAmount);
 
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
@@ -86,7 +88,7 @@ public class SmartContractEventProcessorService {
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
-        log.info("[Investment 실패] 프로젝트 번호: {}, 투자 번호 : {}, 사유: {}, 상태 코드: {}", event.projectId, investmentId, event.reason, event.status);
+        log.info("[Investment 실패] 프로젝트 번호: {}, 투자 번호 : {}, 사유: {}, 상태 코드: {}", Byte32Converter.convertBytes32ToString(event.projectId), investmentId, event.reason, event.status);
 
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
@@ -124,7 +126,7 @@ public class SmartContractEventProcessorService {
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
-        log.info("[Trade 성공] 프로젝트 번호 : {}, 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}", event.projectId, tradeId, seller, buyer, tokenAmount);
+        log.info("[Trade 성공] 프로젝트 번호 : {}, 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}", Byte32Converter.convertBytes32ToString(event.projectId), tradeId, seller, buyer, tokenAmount);
 
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
@@ -161,7 +163,7 @@ public class SmartContractEventProcessorService {
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
-        log.info("[Trade 실패] 프로젝트 번호: {}, 거래 번호 : {}, 사유: {}, 상태 코드: {}", event.projectId, tradeId, event.reason, event.status);
+        log.info("[Trade 실패] 프로젝트 번호: {}, 거래 번호 : {}, 사유: {}, 상태 코드: {}", Byte32Converter.convertBytes32ToString(event.projectId), tradeId, event.reason, event.status);
 
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
