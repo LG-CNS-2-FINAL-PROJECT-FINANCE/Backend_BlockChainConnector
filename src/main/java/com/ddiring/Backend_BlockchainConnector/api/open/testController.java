@@ -26,7 +26,7 @@ public class testController {
         List<Boolean> resultList = new ArrayList<>(List.of());
         log.info("[INVEST] 체인링크 Functions로부터 결제 확인 요청이 들어왔습니다.");
         investRequestList.forEach(investment -> {
-            log.info("Investment Id : {}, Investor Address : {}, Investment Token Amount : {}", investment.get("investId"), investment.get("investorAddress"), investment.get("tokenAmount"));
+            log.info("Investment Id : {}, Investor Address : {}, Investment Token Amount : {}", investment.get("investmentId"), investment.get("investorAddress"), investment.get("tokenAmount"));
             resultList.add(true);
         });
 
