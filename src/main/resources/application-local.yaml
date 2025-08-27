@@ -36,6 +36,9 @@ spring:
         spring.json.add.type.headers: false # 타입 헤더 추가 비활성화
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
 
+web3j:
+  polling-interval: 30000 # 30초 (30000ms)
+
 jenkins:
   url: ${JENKINS_URL}
   job: ${JENKINS_JOB}
