@@ -37,5 +37,18 @@ public class InvestmentDto {
         private Long tokenAmount;
     }
 
+    public List<FractionalInvestmentToken.investment> toSmartContractStruct() {
+        if (investInfoList == null || investInfoList.isEmpty()) {
+            return null;
+        }
 
+        return this.investInfoList.stream().map(investInfo -> {
+            return new FractionalInvestmentToken.investment(
+                investInfo.investmentId.toString(),
+                investInfo.investorAddress,
+                BigInteger.valueOf(investInfo.tokenAmount),
+                false
+            );
+        }).toList();
+    }
 }

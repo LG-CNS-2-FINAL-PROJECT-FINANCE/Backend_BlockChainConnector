@@ -19,6 +19,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -100,6 +101,11 @@ public class SmartContractService {
 
     public void investment(InvestmentDto investmentDto) {
         try {
+            if (investmentDto.getInvestInfoList().isEmpty()) {
+                log.warn("투자 요청이 존재하지 않습니다.");
+                throw new IllegalArgumentException("투자 요청이 존재하지 않습니다.");
+            }
+
             SmartContract contractInfo = smartContractRepository.findByProjectId(investmentDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
@@ -117,12 +123,14 @@ public class SmartContractService {
                 throw new RuntimeException("스마트 컨트랙트 로딩 에러: {}" + e.getMessage());
             }
 
+            List<FractionalInvestmentToken.investment> investmentRequestInfoList = investmentDto.toSmartContractStruct();
+            if (investmentRequestInfoList == null || investmentRequestInfoList.isEmpty()) {
+                log.warn("변환된 투자 요청을 찾을 수 없습니다.");
+                throw new IllegalArgumentException("변환된 투자 요청을 찾을 수 없습니다.");
+            }
+
             // 비동기 처리
-            smartContract.requestInvestment(
-                            investmentDto.getInvestmentId().toString(),
-                            investmentDto.getInvestorAddress(),
-                            BigInteger.valueOf(investmentDto.getTokenAmount())
-                    ).sendAsync()
+            smartContract.requestInvestment(investmentRequestInfoList).sendAsync()
                     .thenAccept(response -> {
                         log.info("Investment request successful: {}", response);
                         kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getInvestmentId());
