@@ -132,12 +132,12 @@ public class SmartContractService {
             // 비동기 처리
             smartContract.requestInvestment(investmentRequestInfoList).sendAsync()
                     .thenAccept(response -> {
-                        log.info("Investment request successful: {}", response);
-                        kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getInvestmentId());
+                        log.info("Investment request accepted: {}", response.getLogs());
+                        kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getProjectId());
                     })
                     .exceptionally(throwable -> {
                         log.error("Investment request Error: {}", throwable.getMessage());
-                        kafkaMessageProducer.sendInvestRequestRejectedEvent(investmentDto.getInvestmentId(), throwable.getMessage());
+                        kafkaMessageProducer.sendInvestRequestRejectedEvent(investmentDto.getProjectId(), throwable.getMessage());
                         return null;
                     });
         } catch (Exception e) {

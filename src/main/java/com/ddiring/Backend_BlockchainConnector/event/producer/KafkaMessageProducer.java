@@ -34,14 +34,14 @@ public class KafkaMessageProducer {
         sendMessage(DeployFailedEvent.TOPIC, message);
     }
 
-    public void sendInvestRequestAcceptedEvent(Long investmentId) {
-        InvestRequestAcceptedEvent message = InvestRequestAcceptedEvent.of(investmentId);
+    public void sendInvestRequestAcceptedEvent(String projectId) {
+        InvestRequestAcceptedEvent message = InvestRequestAcceptedEvent.of(projectId);
         log.info("Sending InvestRequestAcceptedEvent to topic {}: {}", InvestRequestAcceptedEvent.TOPIC, message);
         sendMessage(InvestRequestAcceptedEvent.TOPIC, message);
     }
 
-    public void sendInvestRequestRejectedEvent(Long investmentId, String errorMessage) {
-        InvestRequestRejectedEvent message = InvestRequestRejectedEvent.of(investmentId, errorMessage);
+    public void sendInvestRequestRejectedEvent(String projectId, String errorMessage) {
+        InvestRequestRejectedEvent message = InvestRequestRejectedEvent.of(projectId, errorMessage);
         log.info("Sending InvestRequestRejectedEvent to topic {}: {}", InvestRequestRejectedEvent.TOPIC, message);
         sendMessage(InvestRequestRejectedEvent.TOPIC, message);
     }
