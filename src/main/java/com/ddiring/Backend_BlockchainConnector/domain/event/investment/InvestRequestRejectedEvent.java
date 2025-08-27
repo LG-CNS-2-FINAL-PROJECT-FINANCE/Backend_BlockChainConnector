@@ -24,12 +24,12 @@ public class InvestRequestRejectedEvent {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class InvestRequestRejectedPayload {
-        private Long investmentId;
+        private String projectId;
         private String status;
         private String reason;
     }
 
-    public static InvestRequestRejectedEvent of(Long investmentId, String reason) {
+    public static InvestRequestRejectedEvent of(String projectId, String reason) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".REJECTED";
 
@@ -38,7 +38,7 @@ public class InvestRequestRejectedEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(InvestRequestRejectedPayload.builder()
-                        .investmentId(investmentId)
+                        .projectId(projectId)
                         .status("REJECTED")
                         .reason(reason)
                         .build()
