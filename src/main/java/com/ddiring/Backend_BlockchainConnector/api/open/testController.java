@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 @RequestMapping(value = "/api/contract", produces = MediaType.APPLICATION_JSON_VALUE)
 public class testController {
     @PostMapping("/investment_payment/verify")
-    public ApiResponseDto<?> verifyInvestment(@RequestBody Map<String, List<Map<String, Object>>> requestBody) {
-        List<Map<String, Object>> investRequestList = requestBody.get("investments");
+    public ApiResponseDto<?> verifyInvestment(@RequestBody Map<String, List<Map<String, Object>>> investments) {
+        List<Map<String, Object>> investRequestList = investments.get("investments");
 
         if (investRequestList == null || investRequestList.isEmpty()) {
             throw new IllegalArgumentException("투자 요청자가 없습니다.");
