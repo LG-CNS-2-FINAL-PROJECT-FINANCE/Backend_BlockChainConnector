@@ -124,7 +124,7 @@ public class SmartContractTradeService {
                             cancelDepositDto.getSellId().toString(),
                             cancelDepositDto.getSellerAddress(),
                             cancelDepositDto.getTokenAmount(),
-                            cancelDepositDto.getHashedMessage().getBytes(StandardCharsets.UTF_8),
+                            Numeric.hexStringToByteArray(cancelDepositDto.getHashedMessage()),
                             BigInteger.valueOf(cancelDepositDto.getV()),
                             Numeric.hexStringToByteArray(cancelDepositDto.getR()),
                             Numeric.hexStringToByteArray(cancelDepositDto.getS())
