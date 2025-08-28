@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.CancelDepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
@@ -35,12 +36,7 @@ public class SmartContractTradeService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(permitSignatureDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    contractInfo.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             // Domain
             String smartContractName = smartContract.name().send();
@@ -80,18 +76,7 @@ public class SmartContractTradeService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract;
-            try {
-                smartContract = FractionalInvestmentToken.load(
-                        contractInfo.getSmartContractAddress(),
-                        contractWrapper.getWeb3j(),
-                        contractWrapper.getCredentials(),
-                        contractWrapper.getGasProvider()
-                );
-            } catch (Exception e) {
-                log.error("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : {}", e.getMessage());
-                throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
-            }
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             smartContract.depositWithPermit(
                             depositDto.getSellId().toString(),
@@ -132,17 +117,7 @@ public class SmartContractTradeService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(tradeDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract;
-            try {
-                smartContract = FractionalInvestmentToken.load(
-                        contractInfo.getSmartContractAddress(),
-                        contractWrapper.getWeb3j(),
-                        contractWrapper.getCredentials(),
-                        contractWrapper.getGasProvider()
-                );
-            } catch (Exception e) {
-                throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
-            }
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             smartContract.requestTrade(
                             tradeDto.getTradeId().toString(),

@@ -109,19 +109,7 @@ public class SmartContractService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(investmentDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            // 동기 처리
-            FractionalInvestmentToken smartContract;
-            try {
-                smartContract = FractionalInvestmentToken.load(
-                        contractInfo.getSmartContractAddress(),
-                        contractWrapper.getWeb3j(),
-                        contractWrapper.getCredentials(),
-                        contractWrapper.getGasProvider()
-                );
-            } catch (Exception e) {
-                log.error("스마트 컨트랙트 로딩 에러: {}", e.getMessage());
-                throw new RuntimeException("스마트 컨트랙트 로딩 에러: {}" + e.getMessage());
-            }
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             List<FractionalInvestmentToken.investment> investmentRequestInfoList = investmentDto.toSmartContractStruct();
             if (investmentRequestInfoList == null || investmentRequestInfoList.isEmpty()) {
@@ -150,12 +138,7 @@ public class SmartContractService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(balanceDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    contractInfo.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             BigInteger tokenAmountWei = smartContract.balanceOf(balanceDto.getUserAddress()).send();
             BigInteger decimals = smartContract.decimals().send();
