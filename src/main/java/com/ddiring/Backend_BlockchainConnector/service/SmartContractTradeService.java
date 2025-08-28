@@ -112,6 +112,35 @@ public class SmartContractTradeService {
             throw new RuntimeException("[Deposit] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
+
+    public void cancelDeposit(CancelDepositDto cancelDepositDto) {
+        try {
+            SmartContract contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
+
+            smartContract.cancelDeposit(
+                            cancelDepositDto.getSellId().toString(),
+                            cancelDepositDto.getSellerAddress(),
+                            cancelDepositDto.getTokenAmount(),
+                            cancelDepositDto.getHashedMessage().getBytes(StandardCharsets.UTF_8),
+                            BigInteger.valueOf(cancelDepositDto.getV()),
+                            Numeric.hexStringToByteArray(cancelDepositDto.getR()),
+                            Numeric.hexStringToByteArray(cancelDepositDto.getS())
+                    ).sendAsync()
+                    .thenAccept(response -> {
+                        log.info("[Smart Contract] 예금 취소 성공: {}", response);
+                        // TODO: 카프카 이벤트 발행
+                    }).exceptionally(throwable -> {
+                        log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
+                        // TODO: 카프카 이벤트 발행
+                        return null;
+                    });
+        }
+        catch (Exception e) {
+            log.error("[CancelDeposit] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[CancelDeposit] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
