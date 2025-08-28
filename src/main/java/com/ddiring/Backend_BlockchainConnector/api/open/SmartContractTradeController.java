@@ -38,7 +38,7 @@ public class SmartContractTradeController {
 
     @PostMapping(value = "/deposit/cancel")
     public ApiResponseDto<?> cancelDeposit(@RequestBody @Valid CancelDepositDto cancelDepositDto) {
-        // TODO: 서비스 호출
+        smartContractTradeService.cancelDeposit(cancelDepositDto);
 
         return ApiResponseDto.defaultOK();
     }
