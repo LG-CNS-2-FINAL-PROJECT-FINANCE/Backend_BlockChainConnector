@@ -66,10 +66,10 @@ public class SmartContractService {
                     deployDto.getMinAmount().toString()
             );
 
-            log.info("Jenkins 배포 요청 성공: " + jenkinsResponse.getStatusCode());
+            log.info("Jenkins 배포 요청 성공: {}", jenkinsResponse.getStatusCode());
         } catch (RuntimeException e) {
-            log.warn("Jenkins 배포 요청 실패: " + e.getMessage());
-            throw new RuntimeException("Jenkins 파이프라인 요청 중 오류 발생", e);
+            log.warn("[Deploy] Jenkins 배포 요청 실패: {}", e.getMessage());
+            throw new RuntimeException("[Deploy] Jenkins 파이프라인 요청 중 오류 발생", e);
         }
     }
 
@@ -94,7 +94,7 @@ public class SmartContractService {
 
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
         } catch (Exception e) {
-            log.error("예상치 못한 에러로 인한 배포 실패: {}", e.getMessage());
+            log.error("[DeployWebHook] 예상치 못한 에러 발생 : {}", e.getMessage());
             kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
         }
     }
@@ -129,7 +129,8 @@ public class SmartContractService {
                         return null;
                     });
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("[Investment] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Investment] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
@@ -149,7 +150,8 @@ public class SmartContractService {
 
             return BalanceDto.Response.builder().tokenAmount(tokenAmountDecimal).build();
         } catch (Exception e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Balance] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Balance] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }

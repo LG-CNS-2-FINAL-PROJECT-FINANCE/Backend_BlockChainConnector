@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -67,7 +68,8 @@ public class SmartContractTradeService {
                 )
                 .build();
         } catch (Exception e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Signature] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Signature] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
@@ -88,8 +90,6 @@ public class SmartContractTradeService {
                             Numeric.hexStringToByteArray(depositDto.getS())
                     ).sendAsync()
                     .thenAccept(response -> {
-                        // TODO; 거래 성공 후 처리 로직 추가
-                        // 예: 거래 성공 이벤트 발생, DB 업데이트 등
                         log.info("[Smart Contract] 예금 성공: {}", response);
                         kafkaMessageProducer.sendDepositSucceededEvent(
                                 depositDto.getSellId(),
@@ -108,7 +108,10 @@ public class SmartContractTradeService {
                         return null;
                     });
         } catch (RuntimeException e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Deposit] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Deposit] 예상치 못한 에러 발생 : " + e.getMessage());
+        }
+    }
         }
     }
 
@@ -139,7 +142,8 @@ public class SmartContractTradeService {
                     });
 
         } catch (RuntimeException e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Trade] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Trade] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }
