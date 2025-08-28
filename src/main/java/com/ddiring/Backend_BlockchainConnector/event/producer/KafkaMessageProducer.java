@@ -2,6 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.event.producer;
 
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositFailedEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositSucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestAcceptedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestRequestRejectedEvent;

@@ -1,4 +1,4 @@
-package com.ddiring.Backend_BlockchainConnector.domain.event.trade;
+package com.ddiring.Backend_BlockchainConnector.domain.event.deposit;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,45 +6,46 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Getter
 @Builder
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class DepositSucceededEvent {
+public class DepositFailedEvent {
     public static final String TOPIC = "DEPOSIT";
 
     private String eventId;
     private String eventType;
     private Instant timestamp;
 
-    private DepositSucceededPayload payload;
+    private DepositFailedPayload payload;
 
     @Getter
     @Builder
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
-    public static class DepositSucceededPayload {
+    public static class DepositFailedPayload {
         private Long sellId;
         private String status;
         private String sellerAddress;
         private Long sellerTokenAmount;
+        private String errorMessage;
     }
 
-    public static DepositSucceededEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount) {
+    public static DepositFailedEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + ".SUCCEEDED";
+        String eventType = TOPIC + ".FAILED";
 
-        return DepositSucceededEvent.builder()
+        return DepositFailedEvent.builder()
                 .eventId(uuid)
                 .eventType(eventType)
                 .timestamp(Instant.now())
-                .payload(DepositSucceededPayload.builder()
+                .payload(DepositFailedPayload.builder()
                         .sellId(sellId)
-                        .status("SUCCEEDED")
+                        .status("FAILED")
                         .sellerAddress(sellerAddress)
                         .sellerTokenAmount(sellerTokenAmount)
+                        .errorMessage(errorMessage)
                         .build()
                 )
                 .build();
