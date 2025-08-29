@@ -9,5 +9,4 @@ import lombok.*;
 public class SellInfo {
     private Long sellId;
     private String sellerAddress;
-    private Long tokenAmount;
 }

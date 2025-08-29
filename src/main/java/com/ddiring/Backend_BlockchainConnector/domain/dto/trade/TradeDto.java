@@ -22,4 +22,11 @@ public class TradeDto {
 
     @NotNull
     private SellInfo sellInfo;
+
+    @NotNull
+    private Long tradeAmount;
+
+    @NotNull
+    private Long pricePerToken;
+
 }
