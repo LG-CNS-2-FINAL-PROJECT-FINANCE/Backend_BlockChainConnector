@@ -162,10 +162,10 @@ public class SmartContractTradeService {
                             tradeDto.getTradeId().toString(),
                             tradeDto.getSellInfo().getSellId().toString(),
                             tradeDto.getSellInfo().getSellerAddress(),
-                            BigInteger.valueOf(tradeDto.getSellInfo().getTokenAmount()),
                             tradeDto.getBuyInfo().getBuyId().toString(),
                             tradeDto.getBuyInfo().getBuyerAddress(),
-                            BigInteger.valueOf(tradeDto.getBuyInfo().getTokenAmount())
+                            BigInteger.valueOf(tradeDto.getTradeAmount()),
+                            BigInteger.valueOf(tradeDto.getPricePerToken())
                     ).sendAsync()
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 거래 요청 성공: {}", response);
