@@ -47,7 +47,7 @@ public class InvestmentDto {
                 investInfo.investmentId.toString(),
                 investInfo.investorAddress,
                 BigInteger.valueOf(investInfo.tokenAmount),
-                false
+                BigInteger.ZERO
             );
         }).toList();
     }

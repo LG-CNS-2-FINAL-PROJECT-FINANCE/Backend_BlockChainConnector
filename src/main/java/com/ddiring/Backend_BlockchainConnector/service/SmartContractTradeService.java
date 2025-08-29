@@ -1,7 +1,6 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.CancelDepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -113,7 +111,7 @@ public class SmartContractTradeService {
         }
     }
 
-    public void cancelDeposit(CancelDepositDto cancelDepositDto) {
+    public void cancelDeposit(DepositWithPermitDto cancelDepositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
@@ -124,7 +122,7 @@ public class SmartContractTradeService {
                             cancelDepositDto.getSellId().toString(),
                             cancelDepositDto.getSellerAddress(),
                             cancelDepositDto.getTokenAmount(),
-                            Numeric.hexStringToByteArray(cancelDepositDto.getHashedMessage()),
+                            cancelDepositDto.getDeadline(),
                             BigInteger.valueOf(cancelDepositDto.getV()),
                             Numeric.hexStringToByteArray(cancelDepositDto.getR()),
                             Numeric.hexStringToByteArray(cancelDepositDto.getS())
@@ -164,10 +162,10 @@ public class SmartContractTradeService {
                             tradeDto.getTradeId().toString(),
                             tradeDto.getSellInfo().getSellId().toString(),
                             tradeDto.getSellInfo().getSellerAddress(),
-                            BigInteger.valueOf(tradeDto.getSellInfo().getTokenAmount()),
                             tradeDto.getBuyInfo().getBuyId().toString(),
                             tradeDto.getBuyInfo().getBuyerAddress(),
-                            BigInteger.valueOf(tradeDto.getBuyInfo().getTokenAmount())
+                            BigInteger.valueOf(tradeDto.getTradeAmount()),
+                            BigInteger.valueOf(tradeDto.getPricePerToken())
                     ).sendAsync()
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 거래 요청 성공: {}", response);
