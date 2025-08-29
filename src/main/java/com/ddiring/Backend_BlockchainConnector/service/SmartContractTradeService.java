@@ -131,10 +131,19 @@ public class SmartContractTradeService {
                     ).sendAsync()
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 취소 성공: {}", response);
-                        // TODO: 카프카 이벤트 발행
+                        kafkaMessageProducer.sendDepositCancelSucceededEvent(
+                                cancelDepositDto.getSellId(),
+                                cancelDepositDto.getSellerAddress(),
+                                cancelDepositDto.getTokenAmount().longValue()
+                        );
                     }).exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
-                        // TODO: 카프카 이벤트 발행
+                        kafkaMessageProducer.sendDepositCancelFailedEvent(
+                                cancelDepositDto.getSellId(),
+                                cancelDepositDto.getSellerAddress(),
+                                cancelDepositDto.getTokenAmount().longValue(),
+                                throwable.getMessage()
+                        );
                         return null;
                     });
         }
