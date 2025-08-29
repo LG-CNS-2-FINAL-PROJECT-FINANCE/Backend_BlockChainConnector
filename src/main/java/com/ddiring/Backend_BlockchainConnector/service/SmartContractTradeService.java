@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.CancelDepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -35,12 +37,7 @@ public class SmartContractTradeService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(permitSignatureDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract = FractionalInvestmentToken.load(
-                    contractInfo.getSmartContractAddress(),
-                    contractWrapper.getWeb3j(),
-                    contractWrapper.getCredentials(),
-                    contractWrapper.getGasProvider()
-            );
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             // Domain
             String smartContractName = smartContract.name().send();
@@ -71,7 +68,8 @@ public class SmartContractTradeService {
                 )
                 .build();
         } catch (Exception e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Signature] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Signature] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
@@ -80,18 +78,7 @@ public class SmartContractTradeService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract;
-            try {
-                smartContract = FractionalInvestmentToken.load(
-                        contractInfo.getSmartContractAddress(),
-                        contractWrapper.getWeb3j(),
-                        contractWrapper.getCredentials(),
-                        contractWrapper.getGasProvider()
-                );
-            } catch (Exception e) {
-                log.error("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : {}", e.getMessage());
-                throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
-            }
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             smartContract.depositWithPermit(
                             depositDto.getSellId().toString(),
@@ -103,8 +90,6 @@ public class SmartContractTradeService {
                             Numeric.hexStringToByteArray(depositDto.getS())
                     ).sendAsync()
                     .thenAccept(response -> {
-                        // TODO; 거래 성공 후 처리 로직 추가
-                        // 예: 거래 성공 이벤트 발생, DB 업데이트 등
                         log.info("[Smart Contract] 예금 성공: {}", response);
                         kafkaMessageProducer.sendDepositSucceededEvent(
                                 depositDto.getSellId(),
@@ -123,7 +108,48 @@ public class SmartContractTradeService {
                         return null;
                     });
         } catch (RuntimeException e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Deposit] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Deposit] 예상치 못한 에러 발생 : " + e.getMessage());
+        }
+    }
+
+    public void cancelDeposit(CancelDepositDto cancelDepositDto) {
+        try {
+            SmartContract contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
+                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
+
+            smartContract.cancelDeposit(
+                            cancelDepositDto.getSellId().toString(),
+                            cancelDepositDto.getSellerAddress(),
+                            cancelDepositDto.getTokenAmount(),
+                            Numeric.hexStringToByteArray(cancelDepositDto.getHashedMessage()),
+                            BigInteger.valueOf(cancelDepositDto.getV()),
+                            Numeric.hexStringToByteArray(cancelDepositDto.getR()),
+                            Numeric.hexStringToByteArray(cancelDepositDto.getS())
+                    ).sendAsync()
+                    .thenAccept(response -> {
+                        log.info("[Smart Contract] 예금 취소 성공: {}", response);
+                        kafkaMessageProducer.sendDepositCancelSucceededEvent(
+                                cancelDepositDto.getSellId(),
+                                cancelDepositDto.getSellerAddress(),
+                                cancelDepositDto.getTokenAmount().longValue()
+                        );
+                    }).exceptionally(throwable -> {
+                        log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
+                        kafkaMessageProducer.sendDepositCancelFailedEvent(
+                                cancelDepositDto.getSellId(),
+                                cancelDepositDto.getSellerAddress(),
+                                cancelDepositDto.getTokenAmount().longValue(),
+                                throwable.getMessage()
+                        );
+                        return null;
+                    });
+        }
+        catch (Exception e) {
+            log.error("[CancelDeposit] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[CancelDeposit] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
@@ -132,17 +158,7 @@ public class SmartContractTradeService {
             SmartContract contractInfo = smartContractRepository.findByProjectId(tradeDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
-            FractionalInvestmentToken smartContract;
-            try {
-                smartContract = FractionalInvestmentToken.load(
-                        contractInfo.getSmartContractAddress(),
-                        contractWrapper.getWeb3j(),
-                        contractWrapper.getCredentials(),
-                        contractWrapper.getGasProvider()
-                );
-            } catch (Exception e) {
-                throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
-            }
+            FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             smartContract.requestTrade(
                             tradeDto.getTradeId().toString(),
@@ -164,7 +180,8 @@ public class SmartContractTradeService {
                     });
 
         } catch (RuntimeException e) {
-            throw new RuntimeException("예상치 못한 에러 발생 : " + e.getMessage());
+            log.error("[Trade] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[Trade] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }

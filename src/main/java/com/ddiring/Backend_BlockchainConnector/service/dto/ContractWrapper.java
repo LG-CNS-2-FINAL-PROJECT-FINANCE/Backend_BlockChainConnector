@@ -1,7 +1,10 @@
 package com.ddiring.Backend_BlockchainConnector.service.dto;
 
+import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
 
+import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -50,4 +53,18 @@ public class ContractWrapper {
         }
     }
 
+    public FractionalInvestmentToken getSmartContract(String contractAddress) {
+        FractionalInvestmentToken smartContract;
+        try {
+            return FractionalInvestmentToken.load(
+                    contractAddress,
+                    this.web3j,
+                    this.credentials,
+                    this.gasProvider
+            );
+        } catch (Exception e) {
+            log.error("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : {}", e.getMessage());
+            throw new RuntimeException("[Blockchain Connector] 스마트 컨트랙트 로드 실패 : " + e.getMessage());
+        }
+    }
 }
