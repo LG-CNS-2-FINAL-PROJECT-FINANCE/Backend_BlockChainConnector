@@ -2,6 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.event.producer;
 
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositCancelFailedEvent;
+import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositCancelSucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositSucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.investment.InvestFailedEvent;
@@ -70,6 +72,18 @@ public class KafkaMessageProducer {
         DepositFailedEvent message = DepositFailedEvent.of(sellId, sellerAddress, tokenAmount, errorMessage);
         log.info("Sending DepositFailedEvent to topic {}: {}", DepositFailedEvent.TOPIC, message);
         sendMessage(DepositFailedEvent.TOPIC, message);
+    }
+
+    public void sendDepositCancelSucceededEvent(Long sellId, String sellerAddress, Long tokenAmount) {
+        DepositCancelSucceededEvent message = DepositCancelSucceededEvent.of(sellId, sellerAddress, tokenAmount);
+        log.info("Sending DepositCancelSucceededEvent to topic {}: {}", DepositCancelSucceededEvent.TOPIC, message);
+        sendMessage(DepositCancelSucceededEvent.TOPIC, message);
+    }
+
+    public void sendDepositCancelFailedEvent(Long sellId, String sellerAddress, Long tokenAmount, String errorMessage) {
+        DepositCancelFailedEvent message = DepositCancelFailedEvent.of(sellId, sellerAddress, tokenAmount, errorMessage);
+        log.info("Sending DepositCancelFailedEvent to topic {}: {}", DepositCancelFailedEvent.TOPIC, message);
+        sendMessage(DepositCancelFailedEvent.TOPIC, message);
     }
 
     public void sendTradeRequestAcceptedEvent(Long tradeId) {
