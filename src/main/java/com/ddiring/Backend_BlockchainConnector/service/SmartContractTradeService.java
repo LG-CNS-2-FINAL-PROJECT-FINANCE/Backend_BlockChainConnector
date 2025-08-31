@@ -148,7 +148,7 @@ public class SmartContractTradeService {
             Deposit cancelDeposit = DepositMapper.toEntity(contractInfo, cancelDepositDto, Deposit.DepositType.CANCEL_DEPOSIT);
             depositRepository.save(cancelDeposit);
 
-            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeposit(contractInfo);
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForCancelDeposit(contractInfo);
             blockchainLogRepository.save(blockchainLog);
 
             smartContract.cancelDeposit(

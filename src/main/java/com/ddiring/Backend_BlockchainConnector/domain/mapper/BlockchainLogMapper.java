@@ -41,7 +41,7 @@ public class BlockchainLogMapper {
                 .projectId(contract.getProjectId())
                 .smartContract(contract)
                 .requestType(BlockchainRequestType.DEPOSIT)
-                .requestStatus(BlockchainRequestStatus.SUCCESS)
+                .requestStatus(BlockchainRequestStatus.PENDING)
                 .build();
     }
 
@@ -51,7 +51,7 @@ public class BlockchainLogMapper {
                 .projectId(contract.getProjectId())
                 .smartContract(contract)
                 .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
-                .requestStatus(BlockchainRequestStatus.SUCCESS)
+                .requestStatus(BlockchainRequestStatus.PENDING)
                 .build();
     }
 
