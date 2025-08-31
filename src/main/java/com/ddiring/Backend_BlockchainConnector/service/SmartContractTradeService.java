@@ -76,7 +76,7 @@ public class SmartContractTradeService {
         }
     }
 
-    public void deposit(DepositWithPermitDto depositDto) {
+    public void deposit(DepositDto depositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
@@ -127,7 +127,7 @@ public class SmartContractTradeService {
         }
     }
 
-    public void cancelDeposit(DepositWithPermitDto cancelDepositDto) {
+    public void cancelDeposit(DepositDto cancelDepositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
