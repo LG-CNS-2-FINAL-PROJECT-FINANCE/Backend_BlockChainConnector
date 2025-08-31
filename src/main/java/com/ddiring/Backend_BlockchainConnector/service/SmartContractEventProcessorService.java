@@ -44,7 +44,7 @@ public class SmartContractEventProcessorService {
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
-        blockchainLog.updateInvestmentSucceeded(event.log.getTransactionHash());
+        blockchainLog.updateOracleSuccessResponse(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getTransactionHash());
         blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendInvestSucceededEvent(investmentId, buyerAddress, tokenAmount);
@@ -69,7 +69,7 @@ public class SmartContractEventProcessorService {
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
-        blockchainLog.updateInvestmentFailed(event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
+        blockchainLog.updateOracleFailureResponse(OracleEventType.INVESTMENT_FAILED, event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendInvestFailedEvent(investmentId, blockchainLog.getOracleEventType().name(), event.reason);
@@ -93,7 +93,7 @@ public class SmartContractEventProcessorService {
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.tradeId), BlockchainRequestType.TRADE)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
-        blockchainLog.updateTradeSucceeded(event.log.getTransactionHash());
+        blockchainLog.updateOracleSuccessResponse(OracleEventType.TRADE_SUCCESSFUL, event.log.getTransactionHash());
         blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendTradeSucceededEvent(tradeId, buyer, tokenAmount, seller, tokenAmount);
@@ -118,7 +118,7 @@ public class SmartContractEventProcessorService {
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.tradeId), BlockchainRequestType.TRADE)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
-        blockchainLog.updateTradeFailed(event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
+        blockchainLog.updateOracleFailureResponse(OracleEventType.TRADE_FAILED, event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendTradeFailedEvent(tradeId, blockchainLog.getErrorType().name(), event.reason);
