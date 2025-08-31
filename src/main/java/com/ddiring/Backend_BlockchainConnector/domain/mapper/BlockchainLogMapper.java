@@ -35,45 +35,23 @@ public class BlockchainLogMapper {
                 .build();
     }
 
-    public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String requestTransactionHash) {
+    public static BlockchainLog toEntityForDeposit(SmartContract contract) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .projectId(contract.getProjectId())
                 .smartContract(contract)
                 .requestType(BlockchainRequestType.DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
-                .requestTransactionHash(requestTransactionHash)
                 .build();
     }
 
-    public static BlockchainLog toEntityForDepositFailed(SmartContract contract) {
-        validateContract(contract);
-        return BlockchainLog.builder()
-                .projectId(contract.getProjectId())
-                .smartContract(contract)
-                .requestType(BlockchainRequestType.DEPOSIT)
-                .requestStatus(BlockchainRequestStatus.FAILURE)
-                .build();
-    }
-
-    public static BlockchainLog toEntityForCancelDepositSucceeded(SmartContract contract, String requestTransactionHash) {
+    public static BlockchainLog toEntityForCancelDeposit(SmartContract contract) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .projectId(contract.getProjectId())
                 .smartContract(contract)
                 .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
-                .requestTransactionHash(requestTransactionHash)
-                .build();
-    }
-
-    public static BlockchainLog toEntityForCancelDepositFailed(SmartContract contract) {
-        validateContract(contract);
-        return BlockchainLog.builder()
-                .projectId(contract.getProjectId())
-                .smartContract(contract)
-                .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
-                .requestStatus(BlockchainRequestStatus.FAILURE)
                 .build();
     }
 
