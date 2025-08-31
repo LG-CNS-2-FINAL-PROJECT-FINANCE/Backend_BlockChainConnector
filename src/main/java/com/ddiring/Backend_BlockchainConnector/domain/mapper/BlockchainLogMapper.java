@@ -1,4 +1,4 @@
-package com.ddiring.Backend_BlockchainConnector.domain.dto.mapper;
+package com.ddiring.Backend_BlockchainConnector.domain.mapper;
 
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
