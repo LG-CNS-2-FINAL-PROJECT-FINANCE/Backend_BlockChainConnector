@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
@@ -96,7 +97,7 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 성공: {}", response);
 
-                        blockchainLog.set(DepositWithPermitDto.toEntityForDepositSucceeded(contractInfo, response.getTransactionHash()));
+                        blockchainLog.set(BlockchainLogMapper.toEntityForDepositSucceeded(contractInfo, response.getTransactionHash()));
 
                         kafkaMessageProducer.sendDepositSucceededEvent(
                                 depositDto.getSellId(),
@@ -107,7 +108,7 @@ public class SmartContractTradeService {
                     .exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
 
-                        blockchainLog.set(DepositWithPermitDto.toEntityForDepositFailed(contractInfo));
+                        blockchainLog.set(BlockchainLogMapper.toEntityForDepositFailed(contractInfo));
 
                         kafkaMessageProducer.sendDepositFailedEvent(
                                 depositDto.getSellId(),

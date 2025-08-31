@@ -41,37 +41,4 @@ public class DepositWithPermitDto {
 
     @NotBlank
     private String s;
-
-    public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String transactionHash) {
-        if (contract == null) {
-            throw new NullPointerException("contract is null");
-        }
-
-        if (contract.getIsActive() == false) {
-            throw new IllegalArgumentException("contract is inactive");
-        }
-
-        return BlockchainLog.builder()
-                .smartContractId(contract)
-                .requestType(BlockchainRequestType.DEPOSIT)
-                .requestStatus(BlockchainRequestStatus.SUCCESS)
-                .transactionHash(transactionHash)
-                .build();
-    }
-
-    public static BlockchainLog toEntityForDepositFailed(SmartContract contract) {
-        if (contract == null) {
-            throw new NullPointerException("contract is null");
-        }
-
-        if (contract.getIsActive() == false) {
-            throw new IllegalArgumentException("contract is inactive");
-        }
-
-        return BlockchainLog.builder()
-                .smartContractId(contract)
-                .requestType(BlockchainRequestType.DEPOSIT)
-                .requestStatus(BlockchainRequestStatus.FAILURE)
-                .build();
-    }
 }
