@@ -201,8 +201,6 @@ public class SmartContractTradeService {
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
-            AtomicReference<BlockchainLog> blockchainLog = new AtomicReference<>();
-
             smartContract.requestTrade(
                             tradeDto.getTradeId().toString(),
                             tradeDto.getSellInfo().getSellId().toString(),
@@ -215,8 +213,8 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 거래 요청 성공: {}", response);
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash(), tradeDto.getTradeId()));
-                        blockchainLogRepository.save(blockchainLog.get());
+                        BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash(), tradeDto.getTradeId());
+                        blockchainLogRepository.save(blockchainLog);
 
                         kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
                     })
