@@ -81,7 +81,7 @@ public class SmartContractEventManagementService {
     }
 
     @Transactional
-    public void addSmartContract(String projectId, String smartContractAddress, BigInteger blockNumber) {
+    public SmartContract addSmartContract(String projectId, String smartContractAddress, BigInteger blockNumber) {
         if (projectId == null) {
             log.error("프로젝트 ID가 필요합니다.");
             throw new IllegalArgumentException("프로젝트 ID가 필요합니다.");
@@ -132,6 +132,8 @@ public class SmartContractEventManagementService {
             eventTrackerRepository.saveAll(eventTrackers);
 
             setupAllEventFilter(contract);
+
+            return contract;
         } catch (Exception e) {
             log.error("[스마트 컨트랙트 등록 실패] {}", e.getMessage());
 

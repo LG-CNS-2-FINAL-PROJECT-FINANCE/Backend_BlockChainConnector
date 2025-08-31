@@ -15,6 +15,14 @@ public class BlockchainLogMapper {
         }
     }
 
+    public static BlockchainLog toEntityForDeploy(String projectId) {
+        return BlockchainLog.builder()
+                .projectId(projectId)
+                .requestType(BlockchainRequestType.SMART_CONTRACT_DEPLOY)
+                .requestStatus(BlockchainRequestStatus.PENDING)
+                .build();
+    }
+
     public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()
