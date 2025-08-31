@@ -1,5 +1,6 @@
 package com.ddiring.Backend_BlockchainConnector.domain.entity;
 
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventErrorType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "event_transaction_log")
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventTransactionLog {
+public class BlockchainLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long logId;
@@ -24,18 +25,21 @@ public class EventTransactionLog {
     @JoinColumn(name = "smart_contract_id", nullable = false)
     private SmartContract smartContractId;
 
+    @Column(name = "request_type", nullable = false)
+    private BlockchainRequestType requestType;
+
+    @Column(name = "request_status", nullable = false)
+    private BlockchainRequestStatus requestStatus;
+
     @Column(name = "transaction_hash")
     private String transactionHash;
 
-    @Column(name = "event_type", nullable = false)
+    @Column(name = "oracle_event_type")
     private OracleEventType oracleEventType;
 
-    @Column(name = "transaction_result", nullable = false)
-    private BlockchainRequestStatus blockchainRequestStatus;
-
-    @Column(name = "error_type", nullable = true)
+    @Column(name = "error_type")
     private OracleEventErrorType errorType;
 
-    @Column(name = "error_reason", nullable = true)
+    @Column(name = "error_reason")
     private String errorReason;
 }
