@@ -45,10 +45,7 @@ public class SmartContractEventProcessorService {
 
         String strProjectId = Byte32Converter.convertBytes32ToString(event.projectId);
         log.info("[Investment 성공] 프로젝트 번호: {}, 투자 번호 : {}, 투자자: {}, 금액: {}", strProjectId, investmentId, buyerAddress, tokenAmount);
-
-        SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
-                .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
-
+        
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
         blockchainLog.updateInvestmentSucceeded(event.log.getTransactionHash());
@@ -74,10 +71,6 @@ public class SmartContractEventProcessorService {
         String strProjectId = Byte32Converter.convertBytes32ToString(event.projectId);
         log.info("[Investment 실패] 프로젝트 번호: {}, 투자 번호 : {}, 사유: {}, 상태 코드: {}", strProjectId, investmentId, event.reason, event.status);
 
-        SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
-                .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
-
-
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
         blockchainLog.updateInvestmentFailed(event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
@@ -99,19 +92,12 @@ public class SmartContractEventProcessorService {
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
+        String strProjectId = Byte32Converter.convertBytes32ToString(event.projectId);
         log.info("[Trade 성공] 프로젝트 번호 : {}, 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}", Byte32Converter.convertBytes32ToString(event.projectId), tradeId, seller, buyer, tokenAmount);
 
-        SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
-                .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
-
-        BlockchainLog blockchainLog = BlockchainLog.builder()
-                .smartContract(smartContract)
-                .oracleTransactionHash(event.log.getTransactionHash())
-                .oracleEventType(OracleEventType.TRADE_SUCCESSFUL)
-                .requestStatus(BlockchainRequestStatus.SUCCESS)
-                .build();
-
-        // TODO: 거래 기록 DB 저장 (성공)
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.tradeId), BlockchainRequestType.TRADE)
+                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+        blockchainLog.updateTradeSucceeded(event.log.getTransactionHash());
         blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendTradeSucceededEvent(tradeId, buyer, tokenAmount, seller, tokenAmount);
@@ -131,21 +117,12 @@ public class SmartContractEventProcessorService {
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
+        String strProjectId = Byte32Converter.convertBytes32ToString(event.projectId);
         log.info("[Trade 실패] 프로젝트 번호: {}, 거래 번호 : {}, 사유: {}, 상태 코드: {}", Byte32Converter.convertBytes32ToString(event.projectId), tradeId, event.reason, event.status);
 
-        SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
-                .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
-
-        BlockchainLog blockchainLog = BlockchainLog.builder()
-                .smartContract(smartContract)
-                .oracleTransactionHash(event.log.getTransactionHash())
-                .oracleEventType(OracleEventType.TRADE_FAILED)
-                .requestStatus(BlockchainRequestStatus.FAILURE)
-                .errorType(OracleEventErrorType.fromValue(event.status.longValue()))
-                .errorReason(event.reason)
-                .build();
-
-        // TODO: 거래 기록 DB 저장 (실패)
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.tradeId), BlockchainRequestType.TRADE)
+                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+        blockchainLog.updateTradeFailed(event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendTradeFailedEvent(tradeId, blockchainLog.getErrorType().name(), event.reason);
