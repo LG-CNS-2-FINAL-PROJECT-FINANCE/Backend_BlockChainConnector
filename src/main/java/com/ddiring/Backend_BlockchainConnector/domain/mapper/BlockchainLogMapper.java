@@ -18,7 +18,8 @@ public class BlockchainLogMapper {
     public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()
-                .smartContractId(contract)
+                .projectId(contract.getProjectId())
+                .smartContract(contract)
                 .requestType(BlockchainRequestType.DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
                 .requestTransactionHash(requestTransactionHash)
@@ -28,7 +29,8 @@ public class BlockchainLogMapper {
     public static BlockchainLog toEntityForDepositFailed(SmartContract contract) {
         validateContract(contract);
         return BlockchainLog.builder()
-                .smartContractId(contract)
+                .projectId(contract.getProjectId())
+                .smartContract(contract)
                 .requestType(BlockchainRequestType.DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.FAILURE)
                 .build();
@@ -37,7 +39,8 @@ public class BlockchainLogMapper {
     public static BlockchainLog toEntityForCancelDepositSucceeded(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()
-                .smartContractId(contract)
+                .projectId(contract.getProjectId())
+                .smartContract(contract)
                 .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
                 .requestTransactionHash(requestTransactionHash)
@@ -47,7 +50,8 @@ public class BlockchainLogMapper {
     public static BlockchainLog toEntityForCancelDepositFailed(SmartContract contract) {
         validateContract(contract);
         return BlockchainLog.builder()
-                .smartContractId(contract)
+                .projectId(contract.getProjectId())
+                .smartContract(contract)
                 .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.FAILURE)
                 .build();
@@ -56,7 +60,8 @@ public class BlockchainLogMapper {
     public static BlockchainLog toEntityForTrade(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()
-                .smartContractId(contract)
+                .projectId(contract.getProjectId())
+                .smartContract(contract)
                 .requestType(BlockchainRequestType.TRADE)
                 .requestStatus(BlockchainRequestStatus.PENDING)
                 .requestTransactionHash(requestTransactionHash)

@@ -54,7 +54,7 @@ public class SmartContractEventProcessorService {
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
         BlockchainLog blockchainLog = BlockchainLog.builder()
-                .smartContractId(smartContract)
+                .smartContract(smartContract)
                 .oracleTransactionHash(transactionHash)
                 .oracleEventType(OracleEventType.INVESTMENT_SUCCESSFUL)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
@@ -92,7 +92,7 @@ public class SmartContractEventProcessorService {
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
         BlockchainLog blockchainLog = BlockchainLog.builder()
-                .smartContractId(smartContract)
+                .smartContract(smartContract)
                 .oracleTransactionHash(event.log.getTransactionHash())
                 .oracleEventType(OracleEventType.INVESTMENT_FAILED)
                 .requestStatus(BlockchainRequestStatus.FAILURE)
@@ -131,7 +131,7 @@ public class SmartContractEventProcessorService {
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
         BlockchainLog blockchainLog = BlockchainLog.builder()
-                .smartContractId(smartContract)
+                .smartContract(smartContract)
                 .oracleTransactionHash(event.log.getTransactionHash())
                 .oracleEventType(OracleEventType.TRADE_SUCCESSFUL)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
@@ -169,7 +169,7 @@ public class SmartContractEventProcessorService {
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
         BlockchainLog blockchainLog = BlockchainLog.builder()
-                .smartContractId(smartContract)
+                .smartContract(smartContract)
                 .oracleTransactionHash(event.log.getTransactionHash())
                 .oracleEventType(OracleEventType.TRADE_FAILED)
                 .requestStatus(BlockchainRequestStatus.FAILURE)

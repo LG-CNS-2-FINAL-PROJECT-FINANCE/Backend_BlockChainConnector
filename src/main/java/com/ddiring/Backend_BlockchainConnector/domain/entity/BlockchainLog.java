@@ -23,7 +23,10 @@ public class BlockchainLog {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "smart_contract_id", nullable = false)
-    private SmartContract smartContractId;
+    private SmartContract smartContract;
+
+    @Column(name = "project_id", nullable = false)
+    private String projectId;
 
     @Column(name = "request_type", nullable = false)
     private BlockchainRequestType requestType;
