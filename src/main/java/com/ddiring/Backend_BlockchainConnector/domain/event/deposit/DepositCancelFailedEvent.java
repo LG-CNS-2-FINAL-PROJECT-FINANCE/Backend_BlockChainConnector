@@ -34,7 +34,7 @@ public class DepositCancelFailedEvent {
 
     public static DepositCancelFailedEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + "CANCEL.FAILED";
+        String eventType = TOPIC + ".CANCEL.FAILED";
 
         return DepositCancelFailedEvent.builder()
                 .eventId(uuid)

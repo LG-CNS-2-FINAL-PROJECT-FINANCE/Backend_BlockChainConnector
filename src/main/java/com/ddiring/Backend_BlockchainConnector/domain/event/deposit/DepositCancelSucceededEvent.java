@@ -33,7 +33,7 @@ public class DepositCancelSucceededEvent {
 
     public static DepositCancelSucceededEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + "CANCEL.SUCCEEDED";
+        String eventType = TOPIC + ".CANCEL.SUCCEEDED";
 
         return DepositCancelSucceededEvent.builder()
                 .eventId(uuid)
