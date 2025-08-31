@@ -1,7 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.api.open;
 
 import com.ddiring.Backend_BlockchainConnector.common.dto.ApiResponseDto;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.service.SmartContractTradeService;
@@ -29,14 +29,14 @@ public class SmartContractTradeController {
     }
 
     @PostMapping(value = "/deposit")
-    public ApiResponseDto<?> depositTokenWithPermit(@RequestBody @Valid DepositWithPermitDto depositDto) {
+    public ApiResponseDto<?> depositTokenWithPermit(@RequestBody @Valid DepositDto depositDto) {
         smartContractTradeService.deposit(depositDto);
 
         return ApiResponseDto.defaultOK();
     }
 
     @PostMapping(value = "/deposit/cancel")
-    public ApiResponseDto<?> cancelDeposit(@RequestBody @Valid DepositWithPermitDto cancelDepositDto) {
+    public ApiResponseDto<?> cancelDeposit(@RequestBody @Valid DepositDto cancelDepositDto) {
         smartContractTradeService.cancelDeposit(cancelDepositDto);
 
         return ApiResponseDto.defaultOK();

@@ -1,16 +1,20 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.Deposit;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.domain.PermitSignatureDomain;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.message.PermitSignatureMessage;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.Backend_BlockchainConnector.domain.mapper.DepositMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
+import com.ddiring.Backend_BlockchainConnector.repository.DepositRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
@@ -33,6 +37,7 @@ public class SmartContractTradeService {
 
     private final SmartContractRepository smartContractRepository;
     private final BlockchainLogRepository blockchainLogRepository;
+    private final DepositRepository depositRepository;
 
     @Transactional
     public PermitSignatureDto.Response getSignature(@Valid PermitSignatureDto.Request permitSignatureDto) {
@@ -76,14 +81,18 @@ public class SmartContractTradeService {
         }
     }
 
-    public void deposit(DepositWithPermitDto depositDto) {
+    public void deposit(DepositDto depositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
-            AtomicReference<BlockchainLog> blockchainLog = new AtomicReference<>();
+            Deposit deposit = DepositMapper.toEntity(contractInfo, depositDto, Deposit.DepositType.DEPOSIT);
+            Deposit updatedDeposit = depositRepository.save(deposit);
+
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeposit(contractInfo, updatedDeposit.getDepositId());
+            blockchainLogRepository.save(blockchainLog);
 
             smartContract.depositWithPermit(
                             depositDto.getSellId().toString(),
@@ -97,7 +106,9 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 성공: {}", response);
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForDepositSucceeded(contractInfo, response.getTransactionHash()));
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                        depositLog.updateSuccessResponse(response.getTransactionHash());
 
                         kafkaMessageProducer.sendDepositSucceededEvent(
                                 depositDto.getSellId(),
@@ -108,7 +119,10 @@ public class SmartContractTradeService {
                     .exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForDepositFailed(contractInfo));
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                        depositLog.updateFailureResponse();
+                        blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositFailedEvent(
                                 depositDto.getSellId(),
@@ -119,22 +133,24 @@ public class SmartContractTradeService {
                         return null;
                     });
 
-            blockchainLogRepository.save(blockchainLog.get());
-
         } catch (RuntimeException e) {
             log.error("[Deposit] 예상치 못한 에러 발생 : {}", e.getMessage());
             throw new RuntimeException("[Deposit] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 
-    public void cancelDeposit(DepositWithPermitDto cancelDepositDto) {
+    public void cancelDeposit(DepositDto cancelDepositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
-            AtomicReference<BlockchainLog> blockchainLog = new AtomicReference<>();
+            Deposit cancelDeposit = DepositMapper.toEntity(contractInfo, cancelDepositDto, Deposit.DepositType.CANCEL_DEPOSIT);
+            Deposit updatedCancelDeposit = depositRepository.save(cancelDeposit);
+
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForCancelDeposit(contractInfo, updatedCancelDeposit.getDepositId());
+            blockchainLogRepository.save(blockchainLog);
 
             smartContract.cancelDeposit(
                             cancelDepositDto.getSellId().toString(),
@@ -148,18 +164,22 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 취소 성공: {}", response);
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForCancelDepositSucceeded(contractInfo, response.getTransactionHash()));
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.CANCEL_DEPOSIT)
+                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                        depositLog.updateSuccessResponse(response.getTransactionHash());
+                        blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositCancelSucceededEvent(
                                 cancelDepositDto.getSellId(),
                                 cancelDepositDto.getSellerAddress(),
                                 cancelDepositDto.getTokenAmount().longValue()
                         );
-                        // TODO: 예금 취소 기록 DB 저장
                     }).exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForCancelDepositFailed(contractInfo));
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                        depositLog.updateFailureResponse();
 
                         kafkaMessageProducer.sendDepositCancelFailedEvent(
                                 cancelDepositDto.getSellId(),
@@ -169,8 +189,6 @@ public class SmartContractTradeService {
                         );
                         return null;
                     });
-
-            blockchainLogRepository.save(blockchainLog.get());
         }
         catch (Exception e) {
             log.error("[CancelDeposit] 예상치 못한 에러 발생 : {}", e.getMessage());
@@ -185,8 +203,6 @@ public class SmartContractTradeService {
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
-            AtomicReference<BlockchainLog> blockchainLog = new AtomicReference<>();
-
             smartContract.requestTrade(
                             tradeDto.getTradeId().toString(),
                             tradeDto.getSellInfo().getSellId().toString(),
@@ -199,7 +215,8 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 거래 요청 성공: {}", response);
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash(), tradeDto.getTradeId()));
+                        BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash(), tradeDto.getTradeId());
+                        blockchainLogRepository.save(blockchainLog);
 
                         kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
                     })
@@ -208,8 +225,6 @@ public class SmartContractTradeService {
                         kafkaMessageProducer.sendTradeRequestRejectedEvent(tradeDto.getTradeId(), throwable.getMessage());
                         return null;
                     });
-
-            blockchainLogRepository.save(blockchainLog.get());
 
         } catch (RuntimeException e) {
             log.error("[Trade] 예상치 못한 에러 발생 : {}", e.getMessage());

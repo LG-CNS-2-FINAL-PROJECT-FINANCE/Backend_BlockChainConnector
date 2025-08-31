@@ -1,9 +1,5 @@
 package com.ddiring.Backend_BlockchainConnector.domain.dto.trade;
 
-import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
-import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -17,7 +13,7 @@ import java.math.BigInteger;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
-public class DepositWithPermitDto {
+public class DepositDto {
     @NotBlank
     private String projectId;
 
