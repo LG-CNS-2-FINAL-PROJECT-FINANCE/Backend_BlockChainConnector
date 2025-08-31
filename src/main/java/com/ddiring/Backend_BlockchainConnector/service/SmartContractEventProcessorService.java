@@ -3,15 +3,12 @@ package com.ddiring.Backend_BlockchainConnector.service;
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
-import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventErrorType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
-import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.utils.Byte32Converter;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.transaction.Transactional;
@@ -27,7 +24,6 @@ import java.math.BigInteger;
 public class SmartContractEventProcessorService {
     private final KafkaMessageProducer kafkaMessageProducer;
 
-    private final SmartContractRepository smartContractRepository;
     private final EventTrackerRepository eventTrackerRepository;
     private final BlockchainLogRepository blockchainLogRepository;
 
@@ -45,7 +41,7 @@ public class SmartContractEventProcessorService {
 
         String strProjectId = Byte32Converter.convertBytes32ToString(event.projectId);
         log.info("[Investment 성공] 프로젝트 번호: {}, 투자 번호 : {}, 투자자: {}, 금액: {}", strProjectId, investmentId, buyerAddress, tokenAmount);
-        
+
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
         blockchainLog.updateInvestmentSucceeded(event.log.getTransactionHash());
