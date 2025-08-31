@@ -37,6 +37,9 @@ public class BlockchainLog {
     @Column(name = "request_transaction_hash")
     private String requestTransactionHash;
 
+    @Column(name = "order_id", columnDefinition = "Investment or Trade")
+    private Long orderId;
+
     @Column(name = "oracle_event_type")
     private OracleEventType oracleEventType;
 

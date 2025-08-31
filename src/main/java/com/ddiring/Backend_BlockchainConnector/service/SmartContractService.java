@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -141,8 +142,10 @@ public class SmartContractService {
                         log.info("Investment request accepted: {}", response.getLogs());
                         kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getProjectId());
 
-                        BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForInvestment(contractInfo, response.getTransactionHash());
-                        blockchainLogRepository.save(blockchainLog);
+                        Stream<BlockchainLog> investLogList = investmentDto.getInvestInfoList().stream().map(investInfo -> {
+                            return BlockchainLogMapper.toEntityForInvestment(contractInfo, response.getTransactionHash(), investInfo.getInvestmentId());
+                        });
+                        blockchainLogRepository.saveAll(investLogList.toList());
 
                     })
                     .exceptionally(throwable -> {

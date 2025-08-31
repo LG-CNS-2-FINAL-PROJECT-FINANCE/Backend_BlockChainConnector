@@ -199,7 +199,7 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 거래 요청 성공: {}", response);
 
-                        blockchainLog.set(BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash()));
+                        blockchainLog.set(BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash(), tradeDto.getTradeId()));
 
                         kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
                     })

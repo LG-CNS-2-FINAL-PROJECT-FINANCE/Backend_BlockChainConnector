@@ -23,7 +23,7 @@ public class BlockchainLogMapper {
                 .build();
     }
 
-    public static BlockchainLog toEntityForInvestment(SmartContract contract, String requestTransactionHash) {
+    public static BlockchainLog toEntityForInvestment(SmartContract contract, String requestTransactionHash, Long orderId) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .projectId(contract.getProjectId())
@@ -31,6 +31,7 @@ public class BlockchainLogMapper {
                 .requestType(BlockchainRequestType.INVESTMENT)
                 .requestStatus(BlockchainRequestStatus.PENDING)
                 .requestTransactionHash(requestTransactionHash)
+                .orderId(orderId)
                 .build();
     }
 
@@ -76,7 +77,7 @@ public class BlockchainLogMapper {
                 .build();
     }
 
-    public static BlockchainLog toEntityForTrade(SmartContract contract, String requestTransactionHash) {
+    public static BlockchainLog toEntityForTrade(SmartContract contract, String requestTransactionHash, Long orderId) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .projectId(contract.getProjectId())
@@ -84,6 +85,7 @@ public class BlockchainLogMapper {
                 .requestType(BlockchainRequestType.TRADE)
                 .requestStatus(BlockchainRequestStatus.PENDING)
                 .requestTransactionHash(requestTransactionHash)
+                .orderId(orderId)
                 .build();
     }
 }
