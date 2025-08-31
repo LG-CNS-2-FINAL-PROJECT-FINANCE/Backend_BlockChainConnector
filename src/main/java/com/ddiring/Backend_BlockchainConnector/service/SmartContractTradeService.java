@@ -91,7 +91,7 @@ public class SmartContractTradeService {
             Deposit deposit = DepositMapper.toEntity(contractInfo, depositDto, Deposit.DepositType.DEPOSIT);
             Deposit updatedDeposit = depositRepository.save(deposit);
 
-            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeposit(contractInfo);
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeposit(contractInfo, updatedDeposit.getDepositId());
             blockchainLogRepository.save(blockchainLog);
 
             smartContract.depositWithPermit(
@@ -122,6 +122,7 @@ public class SmartContractTradeService {
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateFailureResponse();
+                        blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositFailedEvent(
                                 depositDto.getSellId(),
@@ -148,7 +149,7 @@ public class SmartContractTradeService {
             Deposit cancelDeposit = DepositMapper.toEntity(contractInfo, cancelDepositDto, Deposit.DepositType.CANCEL_DEPOSIT);
             Deposit updatedCancelDeposit = depositRepository.save(cancelDeposit);
 
-            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForCancelDeposit(contractInfo);
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForCancelDeposit(contractInfo, updatedCancelDeposit.getDepositId());
             blockchainLogRepository.save(blockchainLog);
 
             smartContract.cancelDeposit(
@@ -166,6 +167,7 @@ public class SmartContractTradeService {
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.CANCEL_DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateSuccessResponse(response.getTransactionHash());
+                        blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositCancelSucceededEvent(
                                 cancelDepositDto.getSellId(),

@@ -35,23 +35,25 @@ public class BlockchainLogMapper {
                 .build();
     }
 
-    public static BlockchainLog toEntityForDeposit(SmartContract contract) {
+    public static BlockchainLog toEntityForDeposit(SmartContract contract, Long orderId) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .projectId(contract.getProjectId())
                 .smartContract(contract)
                 .requestType(BlockchainRequestType.DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.PENDING)
+                .orderId(orderId)
                 .build();
     }
 
-    public static BlockchainLog toEntityForCancelDeposit(SmartContract contract) {
+    public static BlockchainLog toEntityForCancelDeposit(SmartContract contract, Long orderId) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .projectId(contract.getProjectId())
                 .smartContract(contract)
                 .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.PENDING)
+                .orderId(orderId)
                 .build();
     }
 
