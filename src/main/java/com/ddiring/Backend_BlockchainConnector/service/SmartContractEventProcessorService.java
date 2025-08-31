@@ -4,6 +4,7 @@ import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventErrorType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
@@ -48,7 +49,7 @@ public class SmartContractEventProcessorService {
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderId(strProjectId, Long.valueOf(event.investmentId))
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
         blockchainLog.updateInvestmentSucceeded(event.log.getTransactionHash());
         blockchainLogRepository.save(blockchainLog);
@@ -77,7 +78,7 @@ public class SmartContractEventProcessorService {
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
 
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderId(strProjectId, Long.valueOf(event.investmentId))
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
         blockchainLog.updateInvestmentFailed(event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
