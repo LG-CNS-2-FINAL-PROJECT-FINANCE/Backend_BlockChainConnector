@@ -34,3 +34,22 @@ public class BlockchainLogMapper {
                 .build();
     }
 
+    public static BlockchainLog toEntityForCancelDepositSucceeded(SmartContract contract, String transactionHash) {
+        validateContract(contract);
+        return BlockchainLog.builder()
+                .smartContractId(contract)
+                .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
+                .requestStatus(BlockchainRequestStatus.SUCCESS)
+                .transactionHash(transactionHash)
+                .build();
+    }
+
+    public static BlockchainLog toEntityForCancelDepositFailed(SmartContract contract) {
+        validateContract(contract);
+        return BlockchainLog.builder()
+                .smartContractId(contract)
+                .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
+                .requestStatus(BlockchainRequestStatus.FAILURE)
+                .build();
+    }
+}

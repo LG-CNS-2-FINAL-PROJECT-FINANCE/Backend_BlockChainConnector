@@ -134,6 +134,8 @@ public class SmartContractTradeService {
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
+            AtomicReference<BlockchainLog> blockchainLog = new AtomicReference<>();
+
             smartContract.cancelDeposit(
                             cancelDepositDto.getSellId().toString(),
                             cancelDepositDto.getSellerAddress(),
@@ -145,13 +147,20 @@ public class SmartContractTradeService {
                     ).sendAsync()
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 취소 성공: {}", response);
+
+                        blockchainLog.set(BlockchainLogMapper.toEntityForCancelDepositSucceeded(contractInfo, response.getTransactionHash()));
+
                         kafkaMessageProducer.sendDepositCancelSucceededEvent(
                                 cancelDepositDto.getSellId(),
                                 cancelDepositDto.getSellerAddress(),
                                 cancelDepositDto.getTokenAmount().longValue()
                         );
+                        // TODO: 예금 취소 기록 DB 저장
                     }).exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
+
+                        blockchainLog.set(BlockchainLogMapper.toEntityForCancelDepositFailed(contractInfo));
+
                         kafkaMessageProducer.sendDepositCancelFailedEvent(
                                 cancelDepositDto.getSellId(),
                                 cancelDepositDto.getSellerAddress(),
@@ -160,6 +169,8 @@ public class SmartContractTradeService {
                         );
                         return null;
                     });
+
+            blockchainLogRepository.save(blockchainLog.get());
         }
         catch (Exception e) {
             log.error("[CancelDeposit] 예상치 못한 에러 발생 : {}", e.getMessage());
