@@ -2,14 +2,14 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
-import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTransactionLog;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.EventErrorType;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.EventType;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.TransactionResult;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventErrorType;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
-import com.ddiring.Backend_BlockchainConnector.repository.EventTransactionLogRepository;
+import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.utils.Byte32Converter;
 import com.ddiring.contract.FractionalInvestmentToken;
@@ -17,11 +17,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.web3j.utils.Numeric;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -31,12 +28,12 @@ public class SmartContractEventProcessorService {
 
     private final SmartContractRepository smartContractRepository;
     private final EventTrackerRepository eventTrackerRepository;
-    private final EventTransactionLogRepository eventTransactionLogRepository;
+    private final BlockchainLogRepository blockchainLogRepository;
 
     @Transactional
     public void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
         String transactionHash = event.log.getTransactionHash();
-        if (eventTransactionLogRepository.existsByTransactionHash(transactionHash)) {
+        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
             log.warn("[InvestmentSuccess] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
             return;
         }
@@ -46,7 +43,7 @@ public class SmartContractEventProcessorService {
         Long tokenAmount = event.tokenAmount.longValue();
 
         EventTracker eventTracker = eventTrackerRepository
-                .findByEventTypeAndSmartContractId_SmartContractAddress(EventType.INVESTMENT_SUCCESSFUL, event.log.getAddress())
+                .findByEventTypeAndSmartContractId_SmartContractAddress(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getAddress())
                 .orElseThrow(() -> new NotFound("INVESTMENT_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다."));
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
@@ -56,26 +53,27 @@ public class SmartContractEventProcessorService {
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
-        EventTransactionLog eventTransactionLog = EventTransactionLog.builder()
+        BlockchainLog blockchainLog = BlockchainLog.builder()
                 .smartContractId(smartContract)
-                .transactionHash(transactionHash)
-                .eventType(EventType.INVESTMENT_SUCCESSFUL)
-                .transactionResult(TransactionResult.SUCCESS)
+                .oracleTransactionHash(transactionHash)
+                .oracleEventType(OracleEventType.INVESTMENT_SUCCESSFUL)
+                .requestStatus(BlockchainRequestStatus.SUCCESS)
                 .build();
 
-        eventTransactionLogRepository.save(eventTransactionLog);
+        // TODO: 투자 기록 DB 저장 (성공)
+        blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendInvestSucceededEvent(investmentId, buyerAddress, tokenAmount);
     }
 
     @Transactional
     public void handleInvestmentFailed(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
-        if (EventErrorType.REPEAT_FAILED.equals(EventErrorType.fromValue(event.status.longValue()))) {
+        if (OracleEventErrorType.REPEAT_FAILED.equals(OracleEventErrorType.fromValue(event.status.longValue()))) {
             log.info("[InvestmentFailed] Request already processed.");
         }
 
         String transactionHash = event.log.getTransactionHash();
-        if (eventTransactionLogRepository.existsByTransactionHash(transactionHash)) {
+        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
             log.warn("[InvestmentFailed] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
             return;
         }
@@ -83,7 +81,7 @@ public class SmartContractEventProcessorService {
         Long investmentId = Long.valueOf(event.investmentId);
 
         EventTracker eventTracker = eventTrackerRepository
-                .findByEventTypeAndSmartContractId_SmartContractAddress(EventType.INVESTMENT_FAILED, event.log.getAddress())
+                .findByEventTypeAndSmartContractId_SmartContractAddress(OracleEventType.INVESTMENT_FAILED, event.log.getAddress())
                 .orElseThrow(() -> new NotFound("INVESTMENT_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다."));
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
@@ -93,24 +91,25 @@ public class SmartContractEventProcessorService {
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
-        EventTransactionLog eventTransactionLog = EventTransactionLog.builder()
+        BlockchainLog blockchainLog = BlockchainLog.builder()
                 .smartContractId(smartContract)
-                .transactionHash(event.log.getTransactionHash())
-                .eventType(EventType.INVESTMENT_FAILED)
-                .transactionResult(TransactionResult.FAILURE)
-                .errorType(EventErrorType.fromValue(event.status.longValue()))
+                .oracleTransactionHash(event.log.getTransactionHash())
+                .oracleEventType(OracleEventType.INVESTMENT_FAILED)
+                .requestStatus(BlockchainRequestStatus.FAILURE)
+                .errorType(OracleEventErrorType.fromValue(event.status.longValue()))
                 .errorReason(event.reason)
                 .build();
 
-        eventTransactionLogRepository.save(eventTransactionLog);
+        // TODO: 투자 기록 DB 저장 (실패)
+        blockchainLogRepository.save(blockchainLog);
 
-        kafkaMessageProducer.sendInvestFailedEvent(investmentId,eventTransactionLog.getEventType().name(), event.reason);
+        kafkaMessageProducer.sendInvestFailedEvent(investmentId, blockchainLog.getOracleEventType().name(), event.reason);
     }
 
     @Transactional
     public void handleTradeSuccessful(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
         String transactionHash = event.log.getTransactionHash();
-        if (eventTransactionLogRepository.existsByTransactionHash(transactionHash)) {
+        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
             log.warn("[TradeSuccess] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
             return;
         }
@@ -121,7 +120,7 @@ public class SmartContractEventProcessorService {
         Long tokenAmount = event.tokenAmount.longValue();
 
         EventTracker eventTracker = eventTrackerRepository
-                .findByEventTypeAndSmartContractId_SmartContractAddress(EventType.TRADE_SUCCESSFUL, event.log.getAddress())
+                .findByEventTypeAndSmartContractId_SmartContractAddress(OracleEventType.TRADE_SUCCESSFUL, event.log.getAddress())
                 .orElseThrow(() -> new NotFound("TRADE_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다."));
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
@@ -131,26 +130,27 @@ public class SmartContractEventProcessorService {
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
-        EventTransactionLog eventTransactionLog = EventTransactionLog.builder()
+        BlockchainLog blockchainLog = BlockchainLog.builder()
                 .smartContractId(smartContract)
-                .transactionHash(event.log.getTransactionHash())
-                .eventType(EventType.TRADE_SUCCESSFUL)
-                .transactionResult(TransactionResult.SUCCESS)
+                .oracleTransactionHash(event.log.getTransactionHash())
+                .oracleEventType(OracleEventType.TRADE_SUCCESSFUL)
+                .requestStatus(BlockchainRequestStatus.SUCCESS)
                 .build();
 
-        eventTransactionLogRepository.save(eventTransactionLog);
+        // TODO: 거래 기록 DB 저장 (성공)
+        blockchainLogRepository.save(blockchainLog);
 
         kafkaMessageProducer.sendTradeSucceededEvent(tradeId, buyer, tokenAmount, seller, tokenAmount);
     }
 
     @Transactional
     public void handleTradeFailed(FractionalInvestmentToken.TradeFailedEventResponse event) {
-        if (EventErrorType.REPEAT_FAILED.equals(EventErrorType.fromValue(event.status.longValue()))) {
+        if (OracleEventErrorType.REPEAT_FAILED.equals(OracleEventErrorType.fromValue(event.status.longValue()))) {
             log.info("[TradeFailed] Request already processed.");
         }
 
         String transactionHash = event.log.getTransactionHash();
-        if (eventTransactionLogRepository.existsByTransactionHash(transactionHash)) {
+        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
             log.warn("[TradeFailed] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
             return;
         }
@@ -158,7 +158,7 @@ public class SmartContractEventProcessorService {
         Long tradeId = Long.valueOf(event.tradeId);
 
         EventTracker eventTracker = eventTrackerRepository
-                .findByEventTypeAndSmartContractId_SmartContractAddress(EventType.TRADE_FAILED, event.log.getAddress())
+                .findByEventTypeAndSmartContractId_SmartContractAddress(OracleEventType.TRADE_FAILED, event.log.getAddress())
                 .orElseThrow(() -> new NotFound("TRADE_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다."));
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
@@ -168,17 +168,18 @@ public class SmartContractEventProcessorService {
         SmartContract smartContract = smartContractRepository.findBySmartContractAddress(event.log.getAddress())
                 .orElseThrow(() -> new NotFound("해당 컨트랙트 주소는 존재하지 않습니다."));
 
-        EventTransactionLog eventTransactionLog = EventTransactionLog.builder()
+        BlockchainLog blockchainLog = BlockchainLog.builder()
                 .smartContractId(smartContract)
-                .transactionHash(event.log.getTransactionHash())
-                .eventType(EventType.TRADE_FAILED)
-                .transactionResult(TransactionResult.FAILURE)
-                .errorType(EventErrorType.fromValue(event.status.longValue()))
+                .oracleTransactionHash(event.log.getTransactionHash())
+                .oracleEventType(OracleEventType.TRADE_FAILED)
+                .requestStatus(BlockchainRequestStatus.FAILURE)
+                .errorType(OracleEventErrorType.fromValue(event.status.longValue()))
                 .errorReason(event.reason)
                 .build();
 
-        eventTransactionLogRepository.save(eventTransactionLog);
+        // TODO: 거래 기록 DB 저장 (실패)
+        blockchainLogRepository.save(blockchainLog);
 
-        kafkaMessageProducer.sendTradeFailedEvent(tradeId, eventTransactionLog.getErrorType().name(), event.reason);
+        kafkaMessageProducer.sendTradeFailedEvent(tradeId, blockchainLog.getErrorType().name(), event.reason);
     }
 }

@@ -15,13 +15,13 @@ public class BlockchainLogMapper {
         }
     }
 
-    public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String transactionHash) {
+    public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .smartContractId(contract)
                 .requestType(BlockchainRequestType.DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
-                .transactionHash(transactionHash)
+                .requestTransactionHash(requestTransactionHash)
                 .build();
     }
 
@@ -34,13 +34,13 @@ public class BlockchainLogMapper {
                 .build();
     }
 
-    public static BlockchainLog toEntityForCancelDepositSucceeded(SmartContract contract, String transactionHash) {
+    public static BlockchainLog toEntityForCancelDepositSucceeded(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()
                 .smartContractId(contract)
                 .requestType(BlockchainRequestType.CANCEL_DEPOSIT)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
-                .transactionHash(transactionHash)
+                .requestTransactionHash(requestTransactionHash)
                 .build();
     }
 

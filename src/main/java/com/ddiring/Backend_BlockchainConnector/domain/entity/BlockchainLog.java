@@ -31,11 +31,14 @@ public class BlockchainLog {
     @Column(name = "request_status", nullable = false)
     private BlockchainRequestStatus requestStatus;
 
-    @Column(name = "transaction_hash")
-    private String transactionHash;
+    @Column(name = "request_transaction_hash")
+    private String requestTransactionHash;
 
     @Column(name = "oracle_event_type")
     private OracleEventType oracleEventType;
+
+    @Column(name = "oracle_transaction_hash")
+    private String oracleTransactionHash;
 
     @Column(name = "error_type")
     private OracleEventErrorType errorType;
