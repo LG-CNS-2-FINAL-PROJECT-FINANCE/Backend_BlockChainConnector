@@ -23,6 +23,17 @@ public class BlockchainLogMapper {
                 .build();
     }
 
+    public static BlockchainLog toEntityForInvestment(SmartContract contract, String requestTransactionHash) {
+        validateContract(contract);
+        return BlockchainLog.builder()
+                .projectId(contract.getProjectId())
+                .smartContract(contract)
+                .requestType(BlockchainRequestType.INVESTMENT)
+                .requestStatus(BlockchainRequestStatus.PENDING)
+                .requestTransactionHash(requestTransactionHash)
+                .build();
+    }
+
     public static BlockchainLog toEntityForDepositSucceeded(SmartContract contract, String requestTransactionHash) {
         validateContract(contract);
         return BlockchainLog.builder()

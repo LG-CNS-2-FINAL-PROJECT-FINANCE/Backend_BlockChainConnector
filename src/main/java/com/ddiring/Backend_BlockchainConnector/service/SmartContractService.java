@@ -137,6 +137,10 @@ public class SmartContractService {
                     .thenAccept(response -> {
                         log.info("Investment request accepted: {}", response.getLogs());
                         kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getProjectId());
+
+                        BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForInvestment(contractInfo, response.getTransactionHash());
+                        blockchainLogRepository.save(blockchainLog);
+
                     })
                     .exceptionally(throwable -> {
                         log.error("Investment request Error: {}", throwable.getMessage());
