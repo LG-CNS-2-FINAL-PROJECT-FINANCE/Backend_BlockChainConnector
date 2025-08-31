@@ -1,7 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.mapper.BlockchainLogMapper;
+import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
@@ -185,6 +185,8 @@ public class SmartContractTradeService {
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
+            AtomicReference<BlockchainLog> blockchainLog = new AtomicReference<>();
+
             smartContract.requestTrade(
                             tradeDto.getTradeId().toString(),
                             tradeDto.getSellInfo().getSellId().toString(),
@@ -196,6 +198,9 @@ public class SmartContractTradeService {
                     ).sendAsync()
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 거래 요청 성공: {}", response);
+
+                        blockchainLog.set(BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash()));
+
                         kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
                     })
                     .exceptionally(throwable -> {
@@ -203,6 +208,8 @@ public class SmartContractTradeService {
                         kafkaMessageProducer.sendTradeRequestRejectedEvent(tradeDto.getTradeId(), throwable.getMessage());
                         return null;
                     });
+
+            blockchainLogRepository.save(blockchainLog.get());
 
         } catch (RuntimeException e) {
             log.error("[Trade] 예상치 못한 에러 발생 : {}", e.getMessage());

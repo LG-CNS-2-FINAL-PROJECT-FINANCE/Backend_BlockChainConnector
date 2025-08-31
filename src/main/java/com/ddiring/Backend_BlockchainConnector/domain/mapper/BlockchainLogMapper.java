@@ -52,4 +52,14 @@ public class BlockchainLogMapper {
                 .requestStatus(BlockchainRequestStatus.FAILURE)
                 .build();
     }
+
+    public static BlockchainLog toEntityForTrade(SmartContract contract, String requestTransactionHash) {
+        validateContract(contract);
+        return BlockchainLog.builder()
+                .smartContractId(contract)
+                .requestType(BlockchainRequestType.TRADE)
+                .requestStatus(BlockchainRequestStatus.PENDING)
+                .requestTransactionHash(requestTransactionHash)
+                .build();
+    }
 }
