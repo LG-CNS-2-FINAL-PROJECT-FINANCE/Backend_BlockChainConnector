@@ -2,7 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.EventType;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.domain.records.EventFunctionMapping;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
@@ -33,7 +33,7 @@ public class SmartContractEventManagementService {
     private final SmartContractEventProcessorService eventProcessorService;
 
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
-    private final Map<EventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(EventType.class);
+    private final Map<OracleEventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(OracleEventType.class);
 
     private final SmartContractRepository smartContractRepository;
     private final EventTrackerRepository eventTrackerRepository;
@@ -52,28 +52,28 @@ public class SmartContractEventManagementService {
 
     private void initEventFunctionMap() {
         eventFunctionMap.put(
-                EventType.INVESTMENT_SUCCESSFUL,
+                OracleEventType.INVESTMENT_SUCCESSFUL,
                 new EventFunctionMapping(
                         "investmentSuccessfulEventFlowable",
                         event -> eventProcessorService.handleInvestmentSuccessful((FractionalInvestmentToken.InvestmentSuccessfulEventResponse) event)
                 )
         );
         eventFunctionMap.put(
-                EventType.INVESTMENT_FAILED,
+                OracleEventType.INVESTMENT_FAILED,
                 new EventFunctionMapping(
                         "investmentFailedEventFlowable",
                         event -> eventProcessorService.handleInvestmentFailed((FractionalInvestmentToken.InvestmentFailedEventResponse) event)
                 )
         );
         eventFunctionMap.put(
-                EventType.TRADE_SUCCESSFUL,
+                OracleEventType.TRADE_SUCCESSFUL,
                 new EventFunctionMapping(
                         "tradeSuccessfulEventFlowable",
                         event -> eventProcessorService.handleTradeSuccessful((FractionalInvestmentToken.TradeSuccessfulEventResponse) event)
                 )
         );
         eventFunctionMap.put(
-                EventType.TRADE_FAILED,
+                OracleEventType.TRADE_FAILED,
                 new EventFunctionMapping(
                         "tradeFailedEventFlowable",
                         event -> eventProcessorService.handleTradeFailed((FractionalInvestmentToken.TradeFailedEventResponse) event)
@@ -82,7 +82,7 @@ public class SmartContractEventManagementService {
     }
 
     @Transactional
-    public void addSmartContract(String projectId, String smartContractAddress, BigInteger blockNumber) {
+    public SmartContract addSmartContract(String projectId, String smartContractAddress, BigInteger blockNumber) {
         if (projectId == null) {
             log.error("프로젝트 ID가 필요합니다.");
             throw new IllegalArgumentException("프로젝트 ID가 필요합니다.");
@@ -121,10 +121,10 @@ public class SmartContractEventManagementService {
             // 이벤트 필터 설정
             log.info("Adding new smart contract: {}", smartContractAddress);
             List<EventTracker> eventTrackers = new ArrayList<>();
-            EventType.getAllEvent().forEach(event -> {
+            OracleEventType.getAllEvent().forEach(event -> {
                 EventTracker eventTracker = EventTracker.builder()
                         .smartContractId(contract)
-                        .eventType(event)
+                        .oracleEventType(event)
                         .lastBlockNumber(blockNumber)
                         .build();
                 eventTrackers.add(eventTracker);
@@ -133,6 +133,8 @@ public class SmartContractEventManagementService {
             eventTrackerRepository.saveAll(eventTrackers);
 
             setupAllEventFilter(contract);
+
+            return contract;
         } catch (Exception e) {
             log.error("[스마트 컨트랙트 등록 실패] {}", e.getMessage());
 
@@ -179,17 +181,11 @@ public class SmartContractEventManagementService {
 
         List<EventTracker> eventTrackerList = eventTrackerRepository.findAllBySmartContractId_SmartContractId(contract.getSmartContractId());
 
-        FractionalInvestmentToken myContract = FractionalInvestmentToken.load(
-                contract.getSmartContractAddress(),
-                contractWrapper.getWeb3j(),
-                contractWrapper.getCredentials(),
-                contractWrapper.getGasProvider()
-        );
+        FractionalInvestmentToken myContract = contractWrapper.getSmartContract(contract.getSmartContractAddress());
 
-        List<Disposable> disposables = new ArrayList<>();
         eventTrackerList.forEach(eventTracker -> {
-            EventType eventType = eventTracker.getEventType();
-            if (eventType == null) {
+            OracleEventType oracleEventType = eventTracker.getOracleEventType();
+            if (oracleEventType == null) {
                 log.error("유효하지 않은 이벤트 타입입니다.");
                 throw new IllegalArgumentException("유효하지 않은 이벤트 타입입니다.");
             }
@@ -201,24 +197,22 @@ public class SmartContractEventManagementService {
             }
 
             log.info("Setting up event filter for contract: {}, event: {}, startBlockNumber: {}",
-                    contract.getSmartContractAddress(), eventType, startBlockNumber);
+                    contract.getSmartContractAddress(), oracleEventType, startBlockNumber);
 
-            Disposable disposable = setEventFilter(myContract, eventType, startBlockNumber);
+            Disposable disposable = setEventFilter(myContract, oracleEventType, startBlockNumber);
             if (disposable == null) {
-                log.error("이벤트 필터 설정 실패: {} for contract: {}", eventType, contract.getSmartContractAddress());
-                throw new RuntimeException("이벤트 필터 설정 실패 : " + eventType);
+                log.error("이벤트 필터 설정 실패: {} for contract: {}", oracleEventType, contract.getSmartContractAddress());
+                throw new RuntimeException("이벤트 필터 설정 실패 : " + oracleEventType);
             }
-
-            disposables.add(disposable);
         });
 
         log.info("모든 이벤트 필터가 설정되었습니다: {}", contract.getSmartContractAddress());
     }
 
-    private Disposable setEventFilter(FractionalInvestmentToken contract, EventType eventType, BigInteger startBlockNumber) {
+    private Disposable setEventFilter(FractionalInvestmentToken contract, OracleEventType oracleEventType, BigInteger startBlockNumber) {
         try {
             Method smartContractEventMethod = contract.getClass().getMethod(
-                    eventFunctionMap.get(eventType).smartContractEventMethodName(),
+                    eventFunctionMap.get(oracleEventType).smartContractEventMethodName(),
                     DefaultBlockParameter.class,
                     DefaultBlockParameter.class
             );
@@ -228,9 +222,9 @@ public class SmartContractEventManagementService {
                     new DefaultBlockParameterNumber(startBlockNumber),
                     DefaultBlockParameterName.LATEST
             )).subscribe(event -> {
-                eventFunctionMap.get(eventType).eventHandlerMethod().accept((BaseEventResponse) event);
+                eventFunctionMap.get(oracleEventType).eventHandlerMethod().accept((BaseEventResponse) event);
             }, throwable -> {
-                log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage());
+                log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage(), throwable);
             });
 
         } catch (NoSuchMethodException e) {

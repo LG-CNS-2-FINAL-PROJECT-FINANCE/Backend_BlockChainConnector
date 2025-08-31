@@ -3,9 +3,12 @@ package com.ddiring.Backend_BlockchainConnector.service;
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
+import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
@@ -21,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -29,7 +34,9 @@ public class SmartContractService {
     private final ContractWrapper contractWrapper;
     private final KafkaMessageProducer kafkaMessageProducer;
     private final SmartContractEventManagementService eventManagementService;
+
     private final SmartContractRepository smartContractRepository;
+    private final BlockchainLogRepository blockchainLogRepository;
 
     private final RemoteJenkinsService remoteJenkinsService;
 
@@ -66,6 +73,9 @@ public class SmartContractService {
                     deployDto.getMinAmount().toString()
             );
 
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeploy(deployDto.getProjectId());
+            blockchainLogRepository.save(blockchainLog);
+
             log.info("Jenkins 배포 요청 성공: {}", jenkinsResponse.getStatusCode());
         } catch (RuntimeException e) {
             log.warn("[Deploy] Jenkins 배포 요청 실패: {}", e.getMessage());
@@ -74,9 +84,14 @@ public class SmartContractService {
     }
 
     public void postDeployProcess(SmartContractDeployResultDto resultDto) {
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
+                .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
+
         if (!"success".equals(resultDto.getStatus())) {
             log.error("스마트 컨트랙트 배포 실패: {}", resultDto.getStatus());
             kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
+            blockchainLog.updateDeployFailed();
+            blockchainLogRepository.save(blockchainLog);
             return;
         }
 
@@ -84,13 +99,17 @@ public class SmartContractService {
             log.info("스마트 컨트랙트 배포 성공: {}", resultDto.getAddress());
 
             EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
-            TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt().orElseThrow();
+            TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt()
+                    .orElseThrow(() -> new NotFound("Can not get Transaction Hash"));
 
-            eventManagementService.addSmartContract(
+            SmartContract contractInfo = eventManagementService.addSmartContract(
                 resultDto.getProjectId(),
                 resultDto.getAddress(),
                 transactionReceipt.getBlockNumber()
             );
+
+            blockchainLog.updateDeploySucceeded(contractInfo, transactionReceipt.getTransactionHash());
+            blockchainLogRepository.save(blockchainLog);
 
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
         } catch (Exception e) {
@@ -122,6 +141,12 @@ public class SmartContractService {
                     .thenAccept(response -> {
                         log.info("Investment request accepted: {}", response.getLogs());
                         kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getProjectId());
+
+                        Stream<BlockchainLog> investLogList = investmentDto.getInvestInfoList().stream().map(investInfo -> {
+                            return BlockchainLogMapper.toEntityForInvestment(contractInfo, response.getTransactionHash(), investInfo.getInvestmentId());
+                        });
+                        blockchainLogRepository.saveAll(investLogList.toList());
+
                     })
                     .exceptionally(throwable -> {
                         log.error("Investment request Error: {}", throwable.getMessage());
