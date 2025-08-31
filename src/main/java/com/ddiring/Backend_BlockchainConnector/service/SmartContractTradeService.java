@@ -89,7 +89,7 @@ public class SmartContractTradeService {
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             Deposit deposit = DepositMapper.toEntity(contractInfo, depositDto, Deposit.DepositType.DEPOSIT);
-            depositRepository.save(deposit);
+            Deposit updatedDeposit = depositRepository.save(deposit);
 
             BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeposit(contractInfo);
             blockchainLogRepository.save(blockchainLog);
@@ -106,7 +106,7 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 성공: {}", response);
 
-                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), deposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateSuccessResponse(response.getTransactionHash());
 
@@ -119,7 +119,7 @@ public class SmartContractTradeService {
                     .exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
 
-                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), deposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateFailureResponse();
 
@@ -146,7 +146,7 @@ public class SmartContractTradeService {
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
             Deposit cancelDeposit = DepositMapper.toEntity(contractInfo, cancelDepositDto, Deposit.DepositType.CANCEL_DEPOSIT);
-            depositRepository.save(cancelDeposit);
+            Deposit updatedCancelDeposit = depositRepository.save(cancelDeposit);
 
             BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForCancelDeposit(contractInfo);
             blockchainLogRepository.save(blockchainLog);
@@ -163,7 +163,7 @@ public class SmartContractTradeService {
                     .thenAccept(response -> {
                         log.info("[Smart Contract] 예금 취소 성공: {}", response);
 
-                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), cancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateSuccessResponse(response.getTransactionHash());
 
@@ -175,7 +175,7 @@ public class SmartContractTradeService {
                     }).exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
 
-                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), cancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateFailureResponse();
 
