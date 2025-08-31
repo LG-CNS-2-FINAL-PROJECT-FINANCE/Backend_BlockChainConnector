@@ -32,12 +32,6 @@ public class SmartContractEventProcessorService {
 
     @Transactional
     public void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
-        String transactionHash = event.log.getTransactionHash();
-        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
-            log.warn("[InvestmentSuccess] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
-            return;
-        }
-
         Long investmentId = Long.valueOf(event.investmentId);
         String buyerAddress = event.buyer;
         Long tokenAmount = event.tokenAmount.longValue();
@@ -55,7 +49,7 @@ public class SmartContractEventProcessorService {
 
         BlockchainLog blockchainLog = BlockchainLog.builder()
                 .smartContract(smartContract)
-                .oracleTransactionHash(transactionHash)
+                .oracleTransactionHash(event.log.getTransactionHash())
                 .oracleEventType(OracleEventType.INVESTMENT_SUCCESSFUL)
                 .requestStatus(BlockchainRequestStatus.SUCCESS)
                 .build();
@@ -70,12 +64,6 @@ public class SmartContractEventProcessorService {
     public void handleInvestmentFailed(FractionalInvestmentToken.InvestmentFailedEventResponse event) {
         if (OracleEventErrorType.REPEAT_FAILED.equals(OracleEventErrorType.fromValue(event.status.longValue()))) {
             log.info("[InvestmentFailed] Request already processed.");
-        }
-
-        String transactionHash = event.log.getTransactionHash();
-        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
-            log.warn("[InvestmentFailed] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
-            return;
         }
 
         Long investmentId = Long.valueOf(event.investmentId);
@@ -108,12 +96,6 @@ public class SmartContractEventProcessorService {
 
     @Transactional
     public void handleTradeSuccessful(FractionalInvestmentToken.TradeSuccessfulEventResponse event) {
-        String transactionHash = event.log.getTransactionHash();
-        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
-            log.warn("[TradeSuccess] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
-            return;
-        }
-
         Long tradeId = Long.valueOf(event.tradeId);
         String seller = event.seller;
         String buyer = event.buyer;
@@ -147,12 +129,6 @@ public class SmartContractEventProcessorService {
     public void handleTradeFailed(FractionalInvestmentToken.TradeFailedEventResponse event) {
         if (OracleEventErrorType.REPEAT_FAILED.equals(OracleEventErrorType.fromValue(event.status.longValue()))) {
             log.info("[TradeFailed] Request already processed.");
-        }
-
-        String transactionHash = event.log.getTransactionHash();
-        if (blockchainLogRepository.existsByTransactionHash(transactionHash)) {
-            log.warn("[TradeFailed] Duplicate transaction hash detected. Skipping save for hash: {}", transactionHash);
-            return;
         }
 
         Long tradeId = Long.valueOf(event.tradeId);
