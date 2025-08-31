@@ -49,7 +49,7 @@ public class BlockchainLog {
     @Column(name = "error_reason")
     private String errorReason;
 
-    public void setNewSmartContract(SmartContract contract, String requestTransactionHash) {
+    public void updateDeployResponse(SmartContract contract, String requestTransactionHash) {
         if (this.smartContract != null) {
             throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
         }

@@ -104,7 +104,7 @@ public class SmartContractService {
 
             BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
                     .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
-            blockchainLog.setNewSmartContract(contractInfo, transactionReceipt.getTransactionHash());
+            blockchainLog.updateDeployResponse(contractInfo, transactionReceipt.getTransactionHash());
             blockchainLogRepository.save(blockchainLog);
 
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
