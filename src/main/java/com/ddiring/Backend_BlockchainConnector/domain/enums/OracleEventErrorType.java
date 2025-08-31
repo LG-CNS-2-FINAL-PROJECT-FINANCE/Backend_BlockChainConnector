@@ -2,10 +2,8 @@ package com.ddiring.Backend_BlockchainConnector.domain.enums;
 
 import lombok.Getter;
 
-import java.util.Arrays;
-
 @Getter
-public enum EventErrorType {
+public enum OracleEventErrorType {
     REPEAT_FAILED("REPEAT_FAILED"),
     CHAINLINK_FAILED("CHAINLINK_FAILED"),
     SMART_CONTRACT_FAILED("SMART_CONTRACT_FAILED"),
@@ -13,11 +11,11 @@ public enum EventErrorType {
 
     private final String errorType;
 
-    EventErrorType(String errorType) {
+    OracleEventErrorType(String errorType) {
         this.errorType = errorType;
     }
 
-    public static EventErrorType fromValue(Long value) {
+    public static OracleEventErrorType fromValue(Long value) {
         if (value == null) {
             throw new NullPointerException("value is null");
         }
@@ -26,6 +24,6 @@ public enum EventErrorType {
             throw new IllegalArgumentException("invalid value for EventErrorType");
         }
 
-        return EventErrorType.values()[value.intValue()];
+        return OracleEventErrorType.values()[value.intValue()];
     }
 }

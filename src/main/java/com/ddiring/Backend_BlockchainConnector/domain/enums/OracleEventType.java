@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public enum EventType {
+public enum OracleEventType {
     INVESTMENT_SUCCESSFUL("investmentSuccessful"),
     INVESTMENT_FAILED("investmentFailed"),
     TRADE_SUCCESSFUL("tradeSuccessful"),
@@ -13,11 +13,11 @@ public enum EventType {
 
     private final String eventName;
 
-    EventType(String eventName) {
+    OracleEventType(String eventName) {
         this.eventName = eventName;
     }
 
-    public static List<EventType> getAllEvent() {
-        return List.of(EventType.values());
+    public static List<OracleEventType> getAllEvent() {
+        return List.of(OracleEventType.values());
     }
 }

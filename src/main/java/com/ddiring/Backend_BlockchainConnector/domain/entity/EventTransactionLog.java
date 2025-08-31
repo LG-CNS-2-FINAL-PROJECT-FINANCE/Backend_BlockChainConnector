@@ -1,8 +1,8 @@
 package com.ddiring.Backend_BlockchainConnector.domain.entity;
 
-import com.ddiring.Backend_BlockchainConnector.domain.enums.EventErrorType;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.EventType;
-import com.ddiring.Backend_BlockchainConnector.domain.enums.TransactionResult;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventErrorType;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,17 +24,17 @@ public class EventTransactionLog {
     @JoinColumn(name = "smart_contract_id", nullable = false)
     private SmartContract smartContractId;
 
-    @Column(name = "transaction_hash", nullable = false, unique = true)
+    @Column(name = "transaction_hash")
     private String transactionHash;
 
     @Column(name = "event_type", nullable = false)
-    private EventType eventType;
+    private OracleEventType oracleEventType;
 
     @Column(name = "transaction_result", nullable = false)
-    private TransactionResult transactionResult;
+    private BlockchainRequestStatus blockchainRequestStatus;
 
     @Column(name = "error_type", nullable = true)
-    private EventErrorType errorType;
+    private OracleEventErrorType errorType;
 
     @Column(name = "error_reason", nullable = true)
     private String errorReason;

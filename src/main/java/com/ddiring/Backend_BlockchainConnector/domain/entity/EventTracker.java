@@ -1,6 +1,6 @@
 package com.ddiring.Backend_BlockchainConnector.domain.entity;
 
-import com.ddiring.Backend_BlockchainConnector.domain.enums.EventType;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +25,7 @@ public class EventTracker {
     private SmartContract smartContractId;
 
     @Column(name = "event_type", nullable = false)
-    private EventType eventType;
+    private OracleEventType oracleEventType;
 
     @Column(name = "last_block_number", nullable = false)
     private BigInteger lastBlockNumber;

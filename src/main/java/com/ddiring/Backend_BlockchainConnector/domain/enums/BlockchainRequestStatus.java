@@ -3,14 +3,14 @@ package com.ddiring.Backend_BlockchainConnector.domain.enums;
 import lombok.Getter;
 
 @Getter
-public enum TransactionResult {
+public enum BlockchainRequestStatus {
     SUCCESS("SUCCESS"),
     FAILURE("FAILURE"),
     PENDING("PENDING");
 
     private final String transactionResult;
 
-    TransactionResult(String result) {
+    BlockchainRequestStatus(String result) {
         transactionResult = result;
     }
 }
