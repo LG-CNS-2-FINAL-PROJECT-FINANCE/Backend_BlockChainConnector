@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.methods.response.BaseEventResponse;
 
 import java.lang.reflect.InvocationTargetException;
@@ -180,14 +181,8 @@ public class SmartContractEventManagementService {
 
         List<EventTracker> eventTrackerList = eventTrackerRepository.findAllBySmartContractId_SmartContractId(contract.getSmartContractId());
 
-        FractionalInvestmentToken myContract = FractionalInvestmentToken.load(
-                contract.getSmartContractAddress(),
-                contractWrapper.getWeb3j(),
-                contractWrapper.getCredentials(),
-                contractWrapper.getGasProvider()
-        );
+        FractionalInvestmentToken myContract = contractWrapper.getSmartContract(contract.getSmartContractAddress());
 
-        List<Disposable> disposables = new ArrayList<>();
         eventTrackerList.forEach(eventTracker -> {
             OracleEventType oracleEventType = eventTracker.getOracleEventType();
             if (oracleEventType == null) {
@@ -209,8 +204,6 @@ public class SmartContractEventManagementService {
                 log.error("이벤트 필터 설정 실패: {} for contract: {}", oracleEventType, contract.getSmartContractAddress());
                 throw new RuntimeException("이벤트 필터 설정 실패 : " + oracleEventType);
             }
-
-            disposables.add(disposable);
         });
 
         log.info("모든 이벤트 필터가 설정되었습니다: {}", contract.getSmartContractAddress());
@@ -231,7 +224,7 @@ public class SmartContractEventManagementService {
             )).subscribe(event -> {
                 eventFunctionMap.get(oracleEventType).eventHandlerMethod().accept((BaseEventResponse) event);
             }, throwable -> {
-                log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage());
+                log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage(), throwable);
             });
 
         } catch (NoSuchMethodException e) {
