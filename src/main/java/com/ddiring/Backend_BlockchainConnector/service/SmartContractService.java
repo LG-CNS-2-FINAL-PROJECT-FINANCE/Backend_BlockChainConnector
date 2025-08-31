@@ -83,9 +83,14 @@ public class SmartContractService {
     }
 
     public void postDeployProcess(SmartContractDeployResultDto resultDto) {
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
+                .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
+
         if (!"success".equals(resultDto.getStatus())) {
             log.error("스마트 컨트랙트 배포 실패: {}", resultDto.getStatus());
             kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
+            blockchainLog.updateDeployFailed();
+            blockchainLogRepository.save(blockchainLog);
             return;
         }
 
@@ -102,9 +107,7 @@ public class SmartContractService {
                 transactionReceipt.getBlockNumber()
             );
 
-            BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
-            blockchainLog.updateDeployResponse(contractInfo, transactionReceipt.getTransactionHash());
+            blockchainLog.updateDeploySucceeded(contractInfo, transactionReceipt.getTransactionHash());
             blockchainLogRepository.save(blockchainLog);
 
             kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());

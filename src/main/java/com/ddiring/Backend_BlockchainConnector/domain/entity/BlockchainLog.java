@@ -49,12 +49,19 @@ public class BlockchainLog {
     @Column(name = "error_reason")
     private String errorReason;
 
-    public void updateDeployResponse(SmartContract contract, String requestTransactionHash) {
+    public void updateDeploySucceeded(SmartContract contract, String requestTransactionHash) {
         if (this.smartContract != null) {
             throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
         }
 
         this.smartContract = contract;
         this.requestTransactionHash = requestTransactionHash;
+        this.requestStatus = BlockchainRequestStatus.SUCCESS;
+    }
+
+    public void updateDeployFailed() {
+        this.requestStatus = BlockchainRequestStatus.FAILURE;
+    }
+
     }
 }
