@@ -81,6 +81,7 @@ public class SmartContractTradeService {
         }
     }
 
+    @Transactional
     public void deposit(DepositDto depositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
@@ -139,6 +140,7 @@ public class SmartContractTradeService {
         }
     }
 
+    @Transactional
     public void cancelDeposit(DepositDto cancelDepositDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
@@ -196,6 +198,7 @@ public class SmartContractTradeService {
         }
     }
 
+    @Transactional
     public void trade(TradeDto tradeDto) {
         try {
             SmartContract contractInfo = smartContractRepository.findByProjectId(tradeDto.getProjectId())

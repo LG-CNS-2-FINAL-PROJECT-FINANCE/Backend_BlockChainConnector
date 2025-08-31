@@ -12,6 +12,7 @@ import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepositor
 import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ public class SmartContractService {
 
     private final JenkinsProperties jenkinsProperties;
 
+    @Transactional
     public void triggerDeploymentPipeline(SmartContractDeployDto deployDto) {
         String crumbValue;
         String authHeader;
@@ -83,6 +85,7 @@ public class SmartContractService {
         }
     }
 
+    @Transactional
     public void postDeployProcess(SmartContractDeployResultDto resultDto) {
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
                 .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
@@ -118,6 +121,7 @@ public class SmartContractService {
         }
     }
 
+    @Transactional
     public void investment(InvestmentDto investmentDto) {
         try {
             if (investmentDto.getInvestInfoList().isEmpty()) {
