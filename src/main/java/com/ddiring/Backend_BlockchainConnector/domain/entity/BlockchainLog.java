@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Builder
-@Table(name = "event_transaction_log")
+@Table(name = "blockchain_log")
 @NoArgsConstructor
 @AllArgsConstructor
 public class BlockchainLog {
@@ -28,24 +28,28 @@ public class BlockchainLog {
     @Column(name = "project_id", nullable = false)
     private String projectId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "request_type", nullable = false)
     private BlockchainRequestType requestType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "request_status", nullable = false)
     private BlockchainRequestStatus requestStatus;
 
     @Column(name = "request_transaction_hash")
     private String requestTransactionHash;
 
-    @Column(name = "order_id", columnDefinition = "Investment or Trade")
-    private Long orderId;
+    @Column(name = "order_id")
+    private Long orderId; // Investment or Trade
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "oracle_event_type")
     private OracleEventType oracleEventType;
 
     @Column(name = "oracle_transaction_hash")
     private String oracleTransactionHash;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "error_type")
     private OracleEventErrorType errorType;
 

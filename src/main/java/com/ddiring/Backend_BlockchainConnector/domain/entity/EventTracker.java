@@ -24,7 +24,8 @@ public class EventTracker {
     @JoinColumn(name = "smart_contract_id", nullable = false)
     private SmartContract smartContractId;
 
-    @Column(name = "event_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "oracle_event_type", nullable = false)
     private OracleEventType oracleEventType;
 
     @Column(name = "last_block_number", nullable = false)

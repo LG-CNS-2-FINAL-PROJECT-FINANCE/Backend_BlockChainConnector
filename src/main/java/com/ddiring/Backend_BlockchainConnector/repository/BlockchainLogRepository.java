@@ -9,7 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface BlockchainLogRepository extends JpaRepository<BlockchainLog, Long> {
-    Boolean existsByTransactionHash(String transactionHash);
 
     Optional<BlockchainLog> findByProjectId(String projectId);
+
+    Optional<BlockchainLog> findByProjectIdAndOrderId(String projectId, Long orderId);
 }

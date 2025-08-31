@@ -12,5 +12,5 @@ import java.util.Optional;
 public interface EventTrackerRepository extends JpaRepository<EventTracker,Long> {
     List<EventTracker> findAllBySmartContractId_SmartContractId(Long smartContractId);
 
-    Optional<EventTracker> findByEventTypeAndSmartContractId_SmartContractAddress(OracleEventType oracleEventType, String smartContractAddress);
+    Optional<EventTracker> findByOracleEventTypeAndSmartContractId_SmartContractAddress(OracleEventType oracleEventType, String smartContractAddress);
 }
