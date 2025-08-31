@@ -70,5 +70,17 @@ public class BlockchainLog {
         this.requestStatus = BlockchainRequestStatus.FAILURE;
     }
 
+    public void updateInvestmentSucceeded(String oracleTransactionHash) {
+        this.oracleEventType = OracleEventType.INVESTMENT_SUCCESSFUL;
+        this.oracleTransactionHash = oracleTransactionHash;
+        this.requestStatus = BlockchainRequestStatus.SUCCESS;
+    }
+
+    public void updateInvestmentFailed(String oracleTransactionHash, OracleEventErrorType errorType, String errorReason) {
+        this.oracleEventType = OracleEventType.INVESTMENT_FAILED;
+        this.oracleTransactionHash = oracleTransactionHash;
+        this.requestStatus = BlockchainRequestStatus.FAILURE;
+        this.errorType = errorType;
+        this.errorReason = errorReason;
     }
 }
