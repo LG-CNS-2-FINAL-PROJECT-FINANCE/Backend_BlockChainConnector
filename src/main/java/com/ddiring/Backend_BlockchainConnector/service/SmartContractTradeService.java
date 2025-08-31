@@ -2,7 +2,7 @@ package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
-import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositWithPermitDto;
+import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.TradeDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.PermitSignatureDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.signature.domain.PermitSignatureDomain;
