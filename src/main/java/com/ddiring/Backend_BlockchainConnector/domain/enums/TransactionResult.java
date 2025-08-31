@@ -4,13 +4,13 @@ import lombok.Getter;
 
 @Getter
 public enum TransactionResult {
-    SUCCESS(0L),
-    FAILURE(1L),
-    PENDING(2L);
+    SUCCESS("SUCCESS"),
+    FAILURE("FAILURE"),
+    PENDING("PENDING");
 
-    private final Long transactionResult;
+    private final String transactionResult;
 
-    TransactionResult(Long l) {
-        transactionResult = l;
+    TransactionResult(String result) {
+        transactionResult = result;
     }
 }

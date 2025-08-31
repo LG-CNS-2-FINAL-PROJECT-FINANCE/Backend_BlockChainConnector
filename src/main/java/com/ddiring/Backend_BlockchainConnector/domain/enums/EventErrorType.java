@@ -6,21 +6,26 @@ import java.util.Arrays;
 
 @Getter
 public enum EventErrorType {
-    REPEAT_FAILED(0L),
-    CHAINLINK_FAILED(1L),
-    SMART_CONTRACT_FAILED(2L),
-    EXTERNAL_API_FAILED(3L);
+    REPEAT_FAILED("REPEAT_FAILED"),
+    CHAINLINK_FAILED("CHAINLINK_FAILED"),
+    SMART_CONTRACT_FAILED("SMART_CONTRACT_FAILED"),
+    EXTERNAL_API_FAILED("EXTERNAL_API_FAILED");
 
-    private final Long errorType;
+    private final String errorType;
 
-    EventErrorType(Long errorType) {
+    EventErrorType(String errorType) {
         this.errorType = errorType;
     }
 
     public static EventErrorType fromValue(Long value) {
-        return Arrays.stream(EventErrorType.values())
-                .filter(type -> type.getErrorType().equals(value))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Invalid errorType value: " + value));
+        if (value == null) {
+            throw new NullPointerException("value is null");
+        }
+
+        if (value < 0L || values().length <= value) {
+            throw new IllegalArgumentException("invalid value for EventErrorType");
+        }
+
+        return EventErrorType.values()[value.intValue()];
     }
 }
