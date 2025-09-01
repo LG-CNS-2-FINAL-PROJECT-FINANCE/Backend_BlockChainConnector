@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface EventTrackerRepository extends JpaRepository<EventTracker,Long> {
-    List<EventTracker> findAllBySmartContractId_SmartContractId(Long smartContractId);
+    List<EventTracker> findAllByDeploymentId_SmartContractId(Long smartContractId);
 
-    Optional<EventTracker> findByOracleEventTypeAndSmartContractId_SmartContractAddress(OracleEventType oracleEventType, String smartContractAddress);
+    Optional<EventTracker> findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType oracleEventType, String smartContractAddress);
 }

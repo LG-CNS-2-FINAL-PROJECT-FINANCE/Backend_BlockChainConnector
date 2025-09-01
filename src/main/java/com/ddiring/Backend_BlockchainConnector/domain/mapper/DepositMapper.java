@@ -2,10 +2,10 @@ package com.ddiring.Backend_BlockchainConnector.domain.mapper;
 
 import com.ddiring.Backend_BlockchainConnector.domain.dto.trade.DepositDto;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.Deposit;
-import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
 
 public class DepositMapper {
-    private static void validateSmartContract(SmartContract contract) {
+    private static void validateSmartContract(Deployment contract) {
         if (contract == null) {
             throw new NullPointerException("Smart Contract is null");
         }
@@ -21,13 +21,13 @@ public class DepositMapper {
         }
     }
 
-    public static Deposit toEntity(SmartContract contract, DepositDto depositDto, Deposit.DepositType depositType) {
+    public static Deposit toEntity(Deployment contract, DepositDto depositDto, Deposit.DepositType depositType) {
         validateSmartContract(contract);
 
         validateDepositDto(depositDto);
 
         return Deposit.builder()
-                .smartContract(contract)
+                .deployment(contract)
                 .sellId(depositDto.getSellId())
                 .userId(depositDto.getSellerAddress())
                 .tokenAmount(depositDto.getTokenAmount().longValue())

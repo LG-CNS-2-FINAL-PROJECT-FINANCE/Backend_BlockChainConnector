@@ -12,17 +12,17 @@ import java.math.BigInteger;
 @Getter
 @Builder
 @Entity
-@Table(name = "event_tracker", uniqueConstraints = @UniqueConstraint(columnNames = {"smart_contract_id", "oracle_event_type"}))
+@Table(name = "event_tracker", uniqueConstraints = @UniqueConstraint(columnNames = {"deployment_id", "oracle_event_type"}))
 @NoArgsConstructor
 @AllArgsConstructor
-public class EventTracker {
+public class EventTracker extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "smart_contract_id", nullable = false)
-    private SmartContract smartContractId;
+    @JoinColumn(name = "deployment_id", nullable = false)
+    private Deployment deploymentId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "oracle_event_type", nullable = false)

@@ -28,13 +28,14 @@ public class InvestSucceededEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class InvestSucceededPayload {
+        private String projectId;
         private Long investmentId;
         private String status;
         private String investorAddress;
         private Long tokenAmount;
     }
 
-    public static InvestSucceededEvent of(Long investmentId, String investorAddress, Long tokenAmount) {
+    public static InvestSucceededEvent of(String projectId, Long investmentId, String investorAddress, Long tokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".SUCCEEDED";
 
@@ -43,6 +44,7 @@ public class InvestSucceededEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(InvestSucceededPayload.builder()
+                        .projectId(projectId)
                         .investmentId(investmentId)
                         .status("SUCCEEDED")
                         .investorAddress(investorAddress)

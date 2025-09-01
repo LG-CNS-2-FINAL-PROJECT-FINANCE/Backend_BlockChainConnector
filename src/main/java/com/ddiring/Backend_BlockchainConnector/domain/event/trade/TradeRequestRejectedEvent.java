@@ -25,12 +25,13 @@ public class TradeRequestRejectedEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class TradeRequestRejectedPayload {
+        private String projectId;
         private Long tradeId;
         private String status;
         private String errorMessage;
     }
 
-    public static TradeRequestRejectedEvent of(Long tradeId, String errorMessage) {
+    public static TradeRequestRejectedEvent of(String projectId, Long tradeId, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".REJECTED";
 
@@ -39,6 +40,7 @@ public class TradeRequestRejectedEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(TradeRequestRejectedPayload.builder()
+                        .projectId(projectId)
                         .tradeId(tradeId)
                         .status("REJECTED")
                         .errorMessage(errorMessage)
