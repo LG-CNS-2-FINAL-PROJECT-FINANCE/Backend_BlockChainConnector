@@ -31,8 +31,8 @@ public class SmartContractController {
     }
 
     @PostMapping("/termination")
-    public ApiResponseDto<?> terminateSmartContract(@RequestBody @NotBlank String projectId) {
-        smartContractService.terminateSmartContract(projectId);
+    public ApiResponseDto<?> terminateSmartContract(@RequestBody @Valid TerminationDto terminationDto) {
+        smartContractService.terminateSmartContract(terminationDto);
 
         return ApiResponseDto.defaultOK();
     }

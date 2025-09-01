@@ -121,8 +121,8 @@ public class SmartContractService {
         }
     }
 
-    public void terminateSmartContract(String projectId) {
-        Deployment smartContract = deploymentRepository.findByProjectId(projectId)
+    public void terminateSmartContract(TerminationDto terminationDto) {
+        Deployment smartContract = deploymentRepository.findByProjectId(terminationDto.getProjectId())
                 .orElseThrow(() -> new NotFound("찾을 수 없는 프로젝트입니다."));
 
         eventManagementService.removeSmartContract(smartContract);
