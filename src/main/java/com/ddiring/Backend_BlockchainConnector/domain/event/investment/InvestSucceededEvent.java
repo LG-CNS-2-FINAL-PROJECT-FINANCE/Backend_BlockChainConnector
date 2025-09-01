@@ -33,9 +33,10 @@ public class InvestSucceededEvent {
         private String status;
         private String investorAddress;
         private Long tokenAmount;
+        private Long initialAmountPerToken;
     }
 
-    public static InvestSucceededEvent of(String projectId, Long investmentId, String investorAddress, Long tokenAmount) {
+    public static InvestSucceededEvent of(String projectId, Long investmentId, String investorAddress, Long tokenAmount, Long initialAmountPerToken) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".SUCCEEDED";
 
@@ -49,6 +50,7 @@ public class InvestSucceededEvent {
                         .status("SUCCEEDED")
                         .investorAddress(investorAddress)
                         .tokenAmount(tokenAmount)
+                        .initialAmountPerToken(initialAmountPerToken)
                         .build()
                 )
                 .build();

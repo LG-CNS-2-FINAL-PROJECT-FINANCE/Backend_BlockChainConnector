@@ -9,6 +9,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
+import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.Backend_BlockchainConnector.utils.Byte32Converter;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.transaction.Transactional;
@@ -22,13 +23,15 @@ import java.math.BigInteger;
 @Service
 @RequiredArgsConstructor
 public class SmartContractEventProcessorService {
+    private final ContractWrapper contractWrapper;
+
     private final KafkaMessageProducer kafkaMessageProducer;
 
     private final EventTrackerRepository eventTrackerRepository;
     private final BlockchainLogRepository blockchainLogRepository;
 
     @Transactional
-    public void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
+    public void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) throws Exception {
         Long investmentId = Long.valueOf(event.investmentId);
         String buyerAddress = event.buyer;
         Long tokenAmount = event.tokenAmount.longValue();
@@ -47,7 +50,10 @@ public class SmartContractEventProcessorService {
         blockchainLog.updateOracleSuccessResponse(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getTransactionHash());
         blockchainLogRepository.save(blockchainLog);
 
-        kafkaMessageProducer.sendInvestSucceededEvent(strProjectId, investmentId, buyerAddress, tokenAmount);
+        FractionalInvestmentToken contract = contractWrapper.getSmartContract(event.log.getAddress());
+        Long initialAmountPerToken = contract.minInvestmentAmount().send().longValue();
+
+        kafkaMessageProducer.sendInvestSucceededEvent(strProjectId, investmentId, buyerAddress, tokenAmount, initialAmountPerToken);
     }
 
     @Transactional

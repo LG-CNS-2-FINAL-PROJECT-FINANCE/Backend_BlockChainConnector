@@ -50,8 +50,8 @@ public class KafkaMessageProducer {
         sendMessage(InvestRequestRejectedEvent.TOPIC, message);
     }
 
-    public void sendInvestSucceededEvent(String projectId, Long investmentId, String buyerAddress, Long tokenAmount) {
-        InvestSucceededEvent message = InvestSucceededEvent.of(projectId, investmentId, buyerAddress, tokenAmount);
+    public void sendInvestSucceededEvent(String projectId, Long investmentId, String buyerAddress, Long tokenAmount, Long initialAmountPerToken) {
+        InvestSucceededEvent message = InvestSucceededEvent.of(projectId, investmentId, buyerAddress, tokenAmount, initialAmountPerToken);
         log.info("Sending InvestSucceededEvent to topic {}: {}", InvestSucceededEvent.TOPIC, message);
         sendMessage(InvestSucceededEvent.TOPIC, message);
     }
