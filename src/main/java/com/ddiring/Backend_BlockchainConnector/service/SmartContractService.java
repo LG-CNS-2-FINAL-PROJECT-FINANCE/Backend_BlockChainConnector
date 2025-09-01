@@ -9,7 +9,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
 import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
-import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
+import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.transaction.Transactional;
@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -35,7 +36,7 @@ public class SmartContractService {
     private final KafkaMessageProducer kafkaMessageProducer;
     private final SmartContractEventManagementService eventManagementService;
 
-    private final SmartContractRepository smartContractRepository;
+    private final DeploymentRepository deploymentRepository;
     private final BlockchainLogRepository blockchainLogRepository;
 
     private final RemoteJenkinsService remoteJenkinsService;
@@ -43,7 +44,7 @@ public class SmartContractService {
     private final JenkinsProperties jenkinsProperties;
 
     @Transactional
-    public void triggerDeploymentPipeline(SmartContractDeployDto deployDto) {
+    public void triggerDeploymentPipeline(DeployDto.Request deployRequestDto) {
         String crumbValue;
         String authHeader;
 
@@ -67,14 +68,14 @@ public class SmartContractService {
                     authHeader,
                     crumbValue,
                     jenkinsProperties.getAuthenticationToken(),
-                    deployDto.getProjectId(),
-                    deployDto.getTokenName(),
-                    deployDto.getTokenSymbol(),
-                    deployDto.getTotalGoalAmount().toString(),
-                    deployDto.getMinAmount().toString()
+                    deployRequestDto.getProjectId(),
+                    deployRequestDto.getTokenName(),
+                    deployRequestDto.getTokenSymbol(),
+                    deployRequestDto.getTotalGoalAmount().toString(),
+                    deployRequestDto.getMinAmount().toString()
             );
 
-            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeploy(deployDto.getProjectId());
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeploy(deployRequestDto.getProjectId());
             blockchainLogRepository.save(blockchainLog);
 
             log.info("Jenkins 배포 요청 성공: {}", jenkinsResponse.getStatusCode());
@@ -85,39 +86,46 @@ public class SmartContractService {
     }
 
     @Transactional
-    public void postDeployProcess(SmartContractDeployResultDto resultDto) {
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
+    public void postDeployProcess(DeployDto.Response deployResponseDto) {
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(deployResponseDto.getProjectId())
                 .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
 
-        if (!"success".equals(resultDto.getStatus())) {
-            log.error("스마트 컨트랙트 배포 실패: {}", resultDto.getStatus());
-            kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
+        if (!"success".equals(deployResponseDto.getStatus())) {
+            log.error("스마트 컨트랙트 배포 실패: {}", deployResponseDto.getStatus());
+            kafkaMessageProducer.sendDeployFailedEvent(deployResponseDto.getProjectId(), "스마트 컨트랙트 배포 실패");
             blockchainLog.updateDeployFailed();
             blockchainLogRepository.save(blockchainLog);
             return;
         }
 
         try {
-            log.info("스마트 컨트랙트 배포 성공: {}", resultDto.getAddress());
+            log.info("스마트 컨트랙트 배포 성공: {}", deployResponseDto.getAddress());
 
-            EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
+            EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(deployResponseDto.getTransactionHash()).send();
             TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt()
                     .orElseThrow(() -> new NotFound("Can not get Transaction Hash"));
 
             Deployment contractInfo = eventManagementService.addSmartContract(
-                resultDto.getProjectId(),
-                resultDto.getAddress(),
+                deployResponseDto.getProjectId(),
+                deployResponseDto.getAddress(),
                 transactionReceipt.getBlockNumber()
             );
 
             blockchainLog.updateDeploySucceeded(contractInfo, transactionReceipt.getTransactionHash());
             blockchainLogRepository.save(blockchainLog);
 
-            kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
+            kafkaMessageProducer.sendDeploySucceededEvent(deployResponseDto.getProjectId());
         } catch (Exception e) {
             log.error("[DeployWebHook] 예상치 못한 에러 발생 : {}", e.getMessage());
-            kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
+            kafkaMessageProducer.sendDeployFailedEvent(deployResponseDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
         }
+    }
+
+    public void terminateSmartContract(TerminationDto terminationDto) {
+        Deployment smartContract = deploymentRepository.findByProjectId(terminationDto.getProjectId())
+                .orElseThrow(() -> new NotFound("찾을 수 없는 프로젝트입니다."));
+
+        eventManagementService.removeSmartContract(smartContract);
     }
 
     @Transactional
@@ -128,7 +136,7 @@ public class SmartContractService {
                 throw new IllegalArgumentException("투자 요청이 존재하지 않습니다.");
             }
 
-            Deployment contractInfo = smartContractRepository.findByProjectId(investmentDto.getProjectId())
+            Deployment contractInfo = deploymentRepository.findByProjectId(investmentDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
@@ -164,7 +172,7 @@ public class SmartContractService {
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
         try {
-            Deployment contractInfo = smartContractRepository.findByProjectId(balanceDto.getProjectId())
+            Deployment contractInfo = deploymentRepository.findByProjectId(balanceDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());

@@ -4,6 +4,7 @@ import com.ddiring.Backend_BlockchainConnector.common.dto.ApiResponseDto;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.service.SmartContractService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -17,14 +18,21 @@ public class SmartContractController {
     private final SmartContractService smartContractService;
 
     @PostMapping("/deploy")
-    public ApiResponseDto<?> deployContract(@RequestBody @Valid SmartContractDeployDto deployDto) {
-        smartContractService.triggerDeploymentPipeline(deployDto);
+    public ApiResponseDto<?> deployContract(@RequestBody @Valid DeployDto.Request deployRequestDto) {
+        smartContractService.triggerDeploymentPipeline(deployRequestDto);
         return ApiResponseDto.defaultOK();
     }
 
     @PostMapping("/deploy/result")
-    public ApiResponseDto<?> receiveDeployResult(@RequestBody @Valid SmartContractDeployResultDto resultDto) {
-        smartContractService.postDeployProcess(resultDto);
+    public ApiResponseDto<?> receiveDeployResult(@RequestBody @Valid DeployDto.Response deployResponseDto) {
+        smartContractService.postDeployProcess(deployResponseDto);
+
+        return ApiResponseDto.defaultOK();
+    }
+
+    @PostMapping("/termination")
+    public ApiResponseDto<?> terminateSmartContract(@RequestBody @Valid TerminationDto terminationDto) {
+        smartContractService.terminateSmartContract(terminationDto);
 
         return ApiResponseDto.defaultOK();
     }
