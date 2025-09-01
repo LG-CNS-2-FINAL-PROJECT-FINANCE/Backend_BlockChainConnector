@@ -31,29 +31,46 @@ public class SmartContractEventProcessorService {
     private final BlockchainLogRepository blockchainLogRepository;
 
     @Transactional
-    public void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) throws Exception {
+    public void handleInvestmentSuccessful(FractionalInvestmentToken.InvestmentSuccessfulEventResponse event) {
         Long investmentId = Long.valueOf(event.investmentId);
-        String buyerAddress = event.buyer;
-        Long tokenAmount = event.tokenAmount.longValue();
-
-        EventTracker eventTracker = eventTrackerRepository
-                .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getAddress())
-                .orElseThrow(() -> new NotFound("INVESTMENT_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다."));
-        eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
-        eventTrackerRepository.save(eventTracker);
-
         String strProjectId = Byte32Converter.convertBytes32ToString(event.projectId);
-        log.info("[Investment 성공] 프로젝트 번호: {}, 투자 번호 : {}, 투자자: {}, 금액: {}", strProjectId, investmentId, buyerAddress, tokenAmount);
 
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
+        // 1. 블록체인 로그 엔티티 조회 (DB 저장 이전 상태)
+        BlockchainLog blockchainLog = blockchainLogRepository
+                .findByProjectIdAndOrderIdAndRequestType(strProjectId, investmentId, BlockchainRequestType.INVESTMENT)
                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
-        blockchainLog.updateOracleSuccessResponse(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getTransactionHash());
-        blockchainLogRepository.save(blockchainLog);
 
-        FractionalInvestmentToken contract = contractWrapper.getSmartContract(event.log.getAddress());
-        Long initialAmountPerToken = contract.minInvestmentAmount().send().longValue();
+        try {
+            EventTracker eventTracker = eventTrackerRepository
+                    .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getAddress())
+                    .orElseThrow(() -> new NotFound("INVESTMENT_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다."));
+            eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE));
+            eventTrackerRepository.save(eventTracker);
 
-        kafkaMessageProducer.sendInvestSucceededEvent(strProjectId, investmentId, buyerAddress, tokenAmount, initialAmountPerToken);
+            FractionalInvestmentToken contract = contractWrapper.getSmartContract(event.log.getAddress());
+            Long minInvestmentAmount = contract.minInvestmentAmount().send().longValue();
+
+            blockchainLog.updateOracleSuccessResponse(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getTransactionHash());
+            blockchainLogRepository.save(blockchainLog);
+
+            kafkaMessageProducer.sendInvestSucceededEvent(strProjectId, investmentId, event.buyer, event.tokenAmount.longValue(), minInvestmentAmount);
+
+            log.info("[Investment 성공] 프로젝트 번호: {}, 투자 번호 : {}, 투자자: {}, 금액: {}", strProjectId, investmentId, event.buyer, event.tokenAmount.longValue());
+
+        } catch (Exception e) {
+            log.error("[Investment 실패] 블록체인 이벤트 처리 중 오류 발생: {}", e.getMessage());
+
+            // 6. 블록체인 로그 상태 업데이트 (실패)
+            blockchainLog.updateOracleFailureResponse(
+                    OracleEventType.INVESTMENT_FAILED,
+                    event.log.getTransactionHash(),
+                    OracleEventErrorType.INTERNAL_SERVER_ERROR,
+                    e.getMessage()
+            );
+            blockchainLogRepository.save(blockchainLog);
+
+            throw new RuntimeException("블록체인 이벤트 처리 중 오류 발생: " + e.getMessage());
+        }
     }
 
     @Transactional
