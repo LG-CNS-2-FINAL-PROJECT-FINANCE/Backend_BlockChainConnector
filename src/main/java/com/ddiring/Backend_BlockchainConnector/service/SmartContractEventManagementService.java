@@ -247,10 +247,15 @@ public class SmartContractEventManagementService {
 
     private void removeAllEventFilter(String smartContractAddress) {
         List<Disposable> disposables = activeDisposables.remove(smartContractAddress);
+
         log.info("Removing event filters for contract: {}", smartContractAddress);
-        for (Disposable disposable : disposables) {
-            if (!disposable.isDisposed()) {
-                disposable.dispose();
+
+        if (disposables != null) {
+            log.info("Removing event filters for contract: {}", smartContractAddress);
+            for (Disposable disposable : disposables) {
+                if (!disposable.isDisposed()) {
+                    disposable.dispose();
+                }
             }
         }
     }
