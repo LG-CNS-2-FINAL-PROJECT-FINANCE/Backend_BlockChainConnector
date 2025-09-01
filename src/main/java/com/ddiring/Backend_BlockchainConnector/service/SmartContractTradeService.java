@@ -112,6 +112,7 @@ public class SmartContractTradeService {
                         blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositSucceededEvent(
+                                depositDto.getProjectId(),
                                 depositDto.getSellId(),
                                 depositDto.getSellerAddress(),
                                 depositDto.getTokenAmount().longValue()
@@ -126,6 +127,7 @@ public class SmartContractTradeService {
                         blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositFailedEvent(
+                                depositDto.getProjectId(),
                                 depositDto.getSellId(),
                                 depositDto.getSellerAddress(),
                                 depositDto.getTokenAmount().longValue(),
@@ -172,6 +174,7 @@ public class SmartContractTradeService {
                         blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositCancelSucceededEvent(
+                                cancelDepositDto.getProjectId(),
                                 cancelDepositDto.getSellId(),
                                 cancelDepositDto.getSellerAddress(),
                                 cancelDepositDto.getTokenAmount().longValue()
@@ -184,6 +187,7 @@ public class SmartContractTradeService {
                         depositLog.updateFailureResponse();
 
                         kafkaMessageProducer.sendDepositCancelFailedEvent(
+                                cancelDepositDto.getProjectId(),
                                 cancelDepositDto.getSellId(),
                                 cancelDepositDto.getSellerAddress(),
                                 cancelDepositDto.getTokenAmount().longValue(),
@@ -221,11 +225,11 @@ public class SmartContractTradeService {
                         BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForTrade(contractInfo, response.getTransactionHash(), tradeDto.getTradeId());
                         blockchainLogRepository.save(blockchainLog);
 
-                        kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getTradeId());
+                        kafkaMessageProducer.sendTradeRequestAcceptedEvent(tradeDto.getProjectId(), tradeDto.getTradeId());
                     })
                     .exceptionally(throwable -> {
                         log.error("[Smart Contract] 거래 요청 중 에러 발생: {}", throwable.getMessage());
-                        kafkaMessageProducer.sendTradeRequestRejectedEvent(tradeDto.getTradeId(), throwable.getMessage());
+                        kafkaMessageProducer.sendTradeRequestRejectedEvent(tradeDto.getProjectId(), tradeDto.getTradeId(), throwable.getMessage());
                         return null;
                     });
 

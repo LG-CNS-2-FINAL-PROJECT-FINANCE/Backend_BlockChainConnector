@@ -26,13 +26,14 @@ public class TradeFailedEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class TradeFailedPayload {
+        private String projectId;
         private Long tradeId;
         private String status;
         private String errorType;
         private String errorMessage;
     }
 
-    public static TradeFailedEvent of(Long tradeId, String errorType, String errorMessage) {
+    public static TradeFailedEvent of(String projectId, Long tradeId, String errorType, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".FAILED";
 
@@ -41,6 +42,7 @@ public class TradeFailedEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(TradeFailedPayload.builder()
+                        .projectId(projectId)
                         .tradeId(tradeId)
                         .status("FAILED")
                         .errorType(errorType)

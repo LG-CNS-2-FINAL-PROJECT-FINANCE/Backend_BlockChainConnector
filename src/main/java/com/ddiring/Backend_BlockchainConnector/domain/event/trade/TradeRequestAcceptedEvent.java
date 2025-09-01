@@ -26,11 +26,12 @@ public class TradeRequestAcceptedEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class TradeRequestAcceptedPayload {
+        private String projectId;
         private Long tradeId;
         private String status;
     }
 
-    public static TradeRequestAcceptedEvent of(Long tradeId) {
+    public static TradeRequestAcceptedEvent of(String projectId, Long tradeId) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".ACCEPTED";
 
@@ -39,6 +40,7 @@ public class TradeRequestAcceptedEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(TradeRequestAcceptedPayload.builder()
+                        .projectId(projectId)
                         .tradeId(tradeId)
                         .status("ACCEPTED")
                         .build()

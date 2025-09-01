@@ -28,13 +28,14 @@ public class InvestFailedEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class InvestFailedPayload {
+        private String projectId;
         private Long investmentId;
         private String status;
         private String errorType;
         private String errorMessage;
     }
 
-    public static InvestFailedEvent of(Long investmentId, String errorType, String errorMessage) {
+    public static InvestFailedEvent of(String projectId, Long investmentId, String errorType, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".FAILED";
 
@@ -43,6 +44,7 @@ public class InvestFailedEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(InvestFailedPayload.builder()
+                        .projectId(projectId)
                         .investmentId(investmentId)
                         .status("FAILED")
                         .errorType(errorType)

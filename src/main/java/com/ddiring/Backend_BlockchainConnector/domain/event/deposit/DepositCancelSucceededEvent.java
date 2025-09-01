@@ -25,13 +25,14 @@ public class DepositCancelSucceededEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class DepositCancelSucceededPayload {
+        private String projectId;
         private Long sellId;
         private String status;
         private String sellerAddress;
         private Long sellerTokenAmount;
     }
 
-    public static DepositCancelSucceededEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount) {
+    public static DepositCancelSucceededEvent of(String projectId, Long sellId, String sellerAddress, Long sellerTokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".CANCEL.SUCCEEDED";
 
@@ -40,6 +41,7 @@ public class DepositCancelSucceededEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(DepositCancelSucceededPayload.builder()
+                        .projectId(projectId)
                         .sellId(sellId)
                         .status("SUCCEEDED")
                         .sellerAddress(sellerAddress)

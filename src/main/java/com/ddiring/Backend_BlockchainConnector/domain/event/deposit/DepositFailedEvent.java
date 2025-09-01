@@ -25,6 +25,7 @@ public class DepositFailedEvent {
     @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
     @AllArgsConstructor
     public static class DepositFailedPayload {
+        private String projectId;
         private Long sellId;
         private String status;
         private String sellerAddress;
@@ -32,7 +33,7 @@ public class DepositFailedEvent {
         private String errorMessage;
     }
 
-    public static DepositFailedEvent of(Long sellId, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
+    public static DepositFailedEvent of(String projectId, Long sellId, String sellerAddress, Long sellerTokenAmount, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".FAILED";
 
@@ -41,6 +42,7 @@ public class DepositFailedEvent {
                 .eventType(eventType)
                 .timestamp(Instant.now())
                 .payload(DepositFailedPayload.builder()
+                        .projectId(projectId)
                         .sellId(sellId)
                         .status("FAILED")
                         .sellerAddress(sellerAddress)
