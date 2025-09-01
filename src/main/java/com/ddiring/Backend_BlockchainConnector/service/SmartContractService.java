@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -118,6 +119,13 @@ public class SmartContractService {
             log.error("[DeployWebHook] 예상치 못한 에러 발생 : {}", e.getMessage());
             kafkaMessageProducer.sendDeployFailedEvent(deployResponseDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
         }
+    }
+
+    public void terminateSmartContract(String projectId) {
+        Deployment smartContract = deploymentRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new NotFound("찾을 수 없는 프로젝트입니다."));
+
+        eventManagementService.removeSmartContract(smartContract);
     }
 
     @Transactional
