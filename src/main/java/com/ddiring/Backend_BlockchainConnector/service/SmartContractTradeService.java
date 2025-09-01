@@ -109,6 +109,7 @@ public class SmartContractTradeService {
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
                                 .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
                         depositLog.updateSuccessResponse(response.getTransactionHash());
+                        blockchainLogRepository.save(depositLog);
 
                         kafkaMessageProducer.sendDepositSucceededEvent(
                                 depositDto.getSellId(),

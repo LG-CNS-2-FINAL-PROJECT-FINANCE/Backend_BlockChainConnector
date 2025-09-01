@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "deposit")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Deposit {
+public class Deposit extends BaseEntity {
     @Id
     @Column(name = "deposit_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)

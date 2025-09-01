@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "blockchain_log")
 @NoArgsConstructor
 @AllArgsConstructor
-public class BlockchainLog {
+public class BlockchainLog extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long logId;
