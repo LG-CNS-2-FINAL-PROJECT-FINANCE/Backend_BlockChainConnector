@@ -1,9 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service.dto;
 
-import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
 
-import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;

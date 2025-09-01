@@ -22,8 +22,8 @@ public class BlockchainLog {
     private Long logId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "smart_contract_id")
-    private SmartContract smartContract;
+    @JoinColumn(name = "deployment_id")
+    private Deployment deployment;
 
     @Column(name = "project_id", nullable = false)
     private String projectId;
@@ -56,12 +56,12 @@ public class BlockchainLog {
     @Column(name = "error_reason")
     private String errorReason;
 
-    public void updateDeploySucceeded(SmartContract contract, String requestTransactionHash) {
-        if (this.smartContract != null) {
+    public void updateDeploySucceeded(Deployment contract, String requestTransactionHash) {
+        if (this.deployment != null) {
             throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
         }
 
-        this.smartContract = contract;
+        this.deployment = contract;
         this.requestTransactionHash = requestTransactionHash;
         this.requestStatus = BlockchainRequestStatus.SUCCESS;
     }

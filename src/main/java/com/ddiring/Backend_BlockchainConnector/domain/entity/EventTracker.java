@@ -21,8 +21,8 @@ public class EventTracker {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "smart_contract_id", nullable = false)
-    private SmartContract smartContractId;
+    @JoinColumn(name = "deployment_id", nullable = false)
+    private Deployment deploymentId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "oracle_event_type", nullable = false)

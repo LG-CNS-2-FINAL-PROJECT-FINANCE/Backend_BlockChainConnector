@@ -19,8 +19,8 @@ public class Deposit {
     private Long depositId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "smart_contract_id", nullable = false)
-    private SmartContract smartContract;
+    @JoinColumn(name = "deployment_id", nullable = false)
+    private Deployment deployment;
 
     @Column(name = "user_id", nullable = false)
     private String userId;

@@ -4,7 +4,7 @@ import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
-import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
 import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -105,7 +104,7 @@ public class SmartContractService {
             TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt()
                     .orElseThrow(() -> new NotFound("Can not get Transaction Hash"));
 
-            SmartContract contractInfo = eventManagementService.addSmartContract(
+            Deployment contractInfo = eventManagementService.addSmartContract(
                 resultDto.getProjectId(),
                 resultDto.getAddress(),
                 transactionReceipt.getBlockNumber()
@@ -129,7 +128,7 @@ public class SmartContractService {
                 throw new IllegalArgumentException("투자 요청이 존재하지 않습니다.");
             }
 
-            SmartContract contractInfo = smartContractRepository.findByProjectId(investmentDto.getProjectId())
+            Deployment contractInfo = smartContractRepository.findByProjectId(investmentDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
@@ -165,7 +164,7 @@ public class SmartContractService {
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
         try {
-            SmartContract contractInfo = smartContractRepository.findByProjectId(balanceDto.getProjectId())
+            Deployment contractInfo = smartContractRepository.findByProjectId(balanceDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());

@@ -1,7 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
-import com.ddiring.Backend_BlockchainConnector.domain.entity.SmartContract;
+import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.domain.records.EventFunctionMapping;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
@@ -44,8 +44,8 @@ public class SmartContractEventManagementService {
     public void init() {
         initEventFunctionMap();
 
-        List<SmartContract> smartContractList = smartContractRepository.findAllByIsActive(true);
-        for (SmartContract contract : smartContractList) {
+        List<Deployment> deploymentList = smartContractRepository.findAllByIsActive(true);
+        for (Deployment contract : deploymentList) {
             setupAllEventFilter(contract);
         }
     }
@@ -82,7 +82,7 @@ public class SmartContractEventManagementService {
     }
 
     @Transactional
-    public SmartContract addSmartContract(String projectId, String smartContractAddress, BigInteger blockNumber) {
+    public Deployment addSmartContract(String projectId, String smartContractAddress, BigInteger blockNumber) {
         if (projectId == null) {
             log.error("프로젝트 ID가 필요합니다.");
             throw new IllegalArgumentException("프로젝트 ID가 필요합니다.");
@@ -111,7 +111,7 @@ public class SmartContractEventManagementService {
         try {
             // 계약 활성화
             log.info("Activating new smart contract: {}", smartContractAddress);
-            SmartContract contract = SmartContract.builder()
+            Deployment contract = Deployment.builder()
                     .projectId(projectId)
                     .smartContractAddress(smartContractAddress)
                     .isActive(true)
@@ -123,7 +123,7 @@ public class SmartContractEventManagementService {
             List<EventTracker> eventTrackers = new ArrayList<>();
             OracleEventType.getAllEvent().forEach(event -> {
                 EventTracker eventTracker = EventTracker.builder()
-                        .smartContractId(contract)
+                        .deploymentId(contract)
                         .oracleEventType(event)
                         .lastBlockNumber(blockNumber)
                         .build();
@@ -145,7 +145,7 @@ public class SmartContractEventManagementService {
     }
 
     @Transactional
-    public void removeSmartContract(SmartContract contract) {
+    public void removeSmartContract(Deployment contract) {
         if (contract == null || contract.getSmartContractAddress() == null) {
             throw new IllegalArgumentException("유효하지 않은 계약 정보입니다.");
         }
@@ -170,7 +170,7 @@ public class SmartContractEventManagementService {
         removeAllEventFilter(contract.getSmartContractAddress());
     }
 
-    private void setupAllEventFilter(SmartContract contract) {
+    private void setupAllEventFilter(Deployment contract) {
         if (contract == null || contract.getSmartContractAddress() == null) {
             throw new IllegalArgumentException("유효하지 않은 계약 정보입니다.");
         }
@@ -179,7 +179,7 @@ public class SmartContractEventManagementService {
             throw new IllegalArgumentException("비활성화된 계약입니다.");
         }
 
-        List<EventTracker> eventTrackerList = eventTrackerRepository.findAllBySmartContractId_SmartContractId(contract.getSmartContractId());
+        List<EventTracker> eventTrackerList = eventTrackerRepository.findAllByDeploymentId_SmartContractId(contract.getSmartContractId());
 
         FractionalInvestmentToken myContract = contractWrapper.getSmartContract(contract.getSmartContractAddress());
 
