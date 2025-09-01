@@ -183,6 +183,11 @@ public class SmartContractEventManagementService {
 
         FractionalInvestmentToken myContract = contractWrapper.getSmartContract(contract.getSmartContractAddress());
 
+        List<Disposable> disposables = activeDisposables.computeIfAbsent(
+                contract.getSmartContractAddress(),
+                k -> new ArrayList<>()
+        );
+
         eventTrackerList.forEach(eventTracker -> {
             OracleEventType oracleEventType = eventTracker.getOracleEventType();
             if (oracleEventType == null) {
@@ -204,6 +209,8 @@ public class SmartContractEventManagementService {
                 log.error("이벤트 필터 설정 실패: {} for contract: {}", oracleEventType, contract.getSmartContractAddress());
                 throw new RuntimeException("이벤트 필터 설정 실패 : " + oracleEventType);
             }
+
+            disposables.add(disposable);
         });
 
         log.info("모든 이벤트 필터가 설정되었습니다: {}", contract.getSmartContractAddress());
