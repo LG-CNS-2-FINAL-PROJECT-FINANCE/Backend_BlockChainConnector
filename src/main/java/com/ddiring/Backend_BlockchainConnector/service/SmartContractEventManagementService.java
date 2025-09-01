@@ -5,7 +5,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.domain.records.EventFunctionMapping;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
-import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
+import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import io.reactivex.Flowable;
@@ -35,7 +35,7 @@ public class SmartContractEventManagementService {
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
     private final Map<OracleEventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(OracleEventType.class);
 
-    private final SmartContractRepository smartContractRepository;
+    private final DeploymentRepository deploymentRepository;
     private final EventTrackerRepository eventTrackerRepository;
 
     private final ContractWrapper contractWrapper;
@@ -44,7 +44,7 @@ public class SmartContractEventManagementService {
     public void init() {
         initEventFunctionMap();
 
-        List<Deployment> deploymentList = smartContractRepository.findAllByIsActive(true);
+        List<Deployment> deploymentList = deploymentRepository.findAllByIsActive(true);
         for (Deployment contract : deploymentList) {
             setupAllEventFilter(contract);
         }
@@ -98,7 +98,7 @@ public class SmartContractEventManagementService {
             throw new IllegalArgumentException("유효하지 않은 블록 번호입니다.");
         }
 
-        if (smartContractRepository.existsBySmartContractAddressOrProjectId(smartContractAddress, projectId)) {
+        if (deploymentRepository.existsBySmartContractAddressOrProjectId(smartContractAddress, projectId)) {
             log.error("계약 주소 또는 프로젝트 ID가 이미 존재합니다. Address: {}, Project ID: {}", smartContractAddress, projectId);
             throw new IllegalArgumentException("이미 존재하는 계약입니다.");
         }
@@ -116,7 +116,7 @@ public class SmartContractEventManagementService {
                     .smartContractAddress(smartContractAddress)
                     .isActive(true)
                     .build();
-            smartContractRepository.save(contract);
+            deploymentRepository.save(contract);
 
             // 이벤트 필터 설정
             log.info("Adding new smart contract: {}", smartContractAddress);
@@ -158,14 +158,14 @@ public class SmartContractEventManagementService {
             throw new IllegalArgumentException("등록된 이벤트 필터가 없습니다: " + contract.getSmartContractAddress());
         }
 
-        if (!smartContractRepository.existsById(contract.getSmartContractId())) {
+        if (!deploymentRepository.existsById(contract.getSmartContractId())) {
             throw new IllegalArgumentException("해당 계약이 존재하지 않습니다: " + contract.getSmartContractAddress());
         }
 
         // 계약 비활성화
         log.info("Deactivating contract: {}", contract.getSmartContractAddress());
         contract.deactivate();
-        smartContractRepository.save(contract);
+        deploymentRepository.save(contract);
 
         removeAllEventFilter(contract.getSmartContractAddress());
     }

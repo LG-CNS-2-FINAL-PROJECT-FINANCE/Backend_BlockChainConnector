@@ -15,7 +15,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.mapper.DepositMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.DepositRepository;
-import com.ddiring.Backend_BlockchainConnector.repository.SmartContractRepository;
+import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
 import jakarta.transaction.Transactional;
@@ -34,14 +34,14 @@ public class SmartContractTradeService {
     private final ContractWrapper contractWrapper;
     private final KafkaMessageProducer kafkaMessageProducer;
 
-    private final SmartContractRepository smartContractRepository;
+    private final DeploymentRepository deploymentRepository;
     private final BlockchainLogRepository blockchainLogRepository;
     private final DepositRepository depositRepository;
 
     @Transactional
     public PermitSignatureDto.Response getSignature(@Valid PermitSignatureDto.Request permitSignatureDto) {
         try {
-            Deployment contractInfo = smartContractRepository.findByProjectId(permitSignatureDto.getProjectId())
+            Deployment contractInfo = deploymentRepository.findByProjectId(permitSignatureDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
@@ -83,7 +83,7 @@ public class SmartContractTradeService {
     @Transactional
     public void deposit(DepositDto depositDto) {
         try {
-            Deployment contractInfo = smartContractRepository.findByProjectId(depositDto.getProjectId())
+            Deployment contractInfo = deploymentRepository.findByProjectId(depositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
@@ -145,7 +145,7 @@ public class SmartContractTradeService {
     @Transactional
     public void cancelDeposit(DepositDto cancelDepositDto) {
         try {
-            Deployment contractInfo = smartContractRepository.findByProjectId(cancelDepositDto.getProjectId())
+            Deployment contractInfo = deploymentRepository.findByProjectId(cancelDepositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
@@ -205,7 +205,7 @@ public class SmartContractTradeService {
     @Transactional
     public void trade(TradeDto tradeDto) {
         try {
-            Deployment contractInfo = smartContractRepository.findByProjectId(tradeDto.getProjectId())
+            Deployment contractInfo = deploymentRepository.findByProjectId(tradeDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());

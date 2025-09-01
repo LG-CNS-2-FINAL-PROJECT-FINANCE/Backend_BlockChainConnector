@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SmartContractRepository extends JpaRepository<Deployment, Long> {
+public interface DeploymentRepository extends JpaRepository<Deployment, Long> {
     List<Deployment> findAllByIsActive(Boolean isActive);
 
     Optional<Deployment> findBySmartContractAddress(String contractAddress);
