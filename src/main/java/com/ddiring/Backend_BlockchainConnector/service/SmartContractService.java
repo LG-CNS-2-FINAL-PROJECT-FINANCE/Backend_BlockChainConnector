@@ -43,7 +43,7 @@ public class SmartContractService {
     private final JenkinsProperties jenkinsProperties;
 
     @Transactional
-    public void triggerDeploymentPipeline(SmartContractDeployDto deployDto) {
+    public void triggerDeploymentPipeline(DeployDto.Request deployRequestDto) {
         String crumbValue;
         String authHeader;
 
@@ -67,14 +67,14 @@ public class SmartContractService {
                     authHeader,
                     crumbValue,
                     jenkinsProperties.getAuthenticationToken(),
-                    deployDto.getProjectId(),
-                    deployDto.getTokenName(),
-                    deployDto.getTokenSymbol(),
-                    deployDto.getTotalGoalAmount().toString(),
-                    deployDto.getMinAmount().toString()
+                    deployRequestDto.getProjectId(),
+                    deployRequestDto.getTokenName(),
+                    deployRequestDto.getTokenSymbol(),
+                    deployRequestDto.getTotalGoalAmount().toString(),
+                    deployRequestDto.getMinAmount().toString()
             );
 
-            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeploy(deployDto.getProjectId());
+            BlockchainLog blockchainLog = BlockchainLogMapper.toEntityForDeploy(deployRequestDto.getProjectId());
             blockchainLogRepository.save(blockchainLog);
 
             log.info("Jenkins 배포 요청 성공: {}", jenkinsResponse.getStatusCode());
@@ -85,38 +85,38 @@ public class SmartContractService {
     }
 
     @Transactional
-    public void postDeployProcess(SmartContractDeployResultDto resultDto) {
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(resultDto.getProjectId())
+    public void postDeployProcess(DeployDto.Response deployResponseDto) {
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(deployResponseDto.getProjectId())
                 .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
 
-        if (!"success".equals(resultDto.getStatus())) {
-            log.error("스마트 컨트랙트 배포 실패: {}", resultDto.getStatus());
-            kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "스마트 컨트랙트 배포 실패");
+        if (!"success".equals(deployResponseDto.getStatus())) {
+            log.error("스마트 컨트랙트 배포 실패: {}", deployResponseDto.getStatus());
+            kafkaMessageProducer.sendDeployFailedEvent(deployResponseDto.getProjectId(), "스마트 컨트랙트 배포 실패");
             blockchainLog.updateDeployFailed();
             blockchainLogRepository.save(blockchainLog);
             return;
         }
 
         try {
-            log.info("스마트 컨트랙트 배포 성공: {}", resultDto.getAddress());
+            log.info("스마트 컨트랙트 배포 성공: {}", deployResponseDto.getAddress());
 
-            EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(resultDto.getTransactionHash()).send();
+            EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(deployResponseDto.getTransactionHash()).send();
             TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt()
                     .orElseThrow(() -> new NotFound("Can not get Transaction Hash"));
 
             Deployment contractInfo = eventManagementService.addSmartContract(
-                resultDto.getProjectId(),
-                resultDto.getAddress(),
+                deployResponseDto.getProjectId(),
+                deployResponseDto.getAddress(),
                 transactionReceipt.getBlockNumber()
             );
 
             blockchainLog.updateDeploySucceeded(contractInfo, transactionReceipt.getTransactionHash());
             blockchainLogRepository.save(blockchainLog);
 
-            kafkaMessageProducer.sendDeploySucceededEvent(resultDto.getProjectId());
+            kafkaMessageProducer.sendDeploySucceededEvent(deployResponseDto.getProjectId());
         } catch (Exception e) {
             log.error("[DeployWebHook] 예상치 못한 에러 발생 : {}", e.getMessage());
-            kafkaMessageProducer.sendDeployFailedEvent(resultDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
+            kafkaMessageProducer.sendDeployFailedEvent(deployResponseDto.getProjectId(), "예상치 못한 에러로 인한 배포 실패: " + e.getMessage());
         }
     }
 

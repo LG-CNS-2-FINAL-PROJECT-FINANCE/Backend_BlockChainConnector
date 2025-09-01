@@ -17,14 +17,14 @@ public class SmartContractController {
     private final SmartContractService smartContractService;
 
     @PostMapping("/deploy")
-    public ApiResponseDto<?> deployContract(@RequestBody @Valid SmartContractDeployDto deployDto) {
-        smartContractService.triggerDeploymentPipeline(deployDto);
+    public ApiResponseDto<?> deployContract(@RequestBody @Valid DeployDto.Request deployRequestDto) {
+        smartContractService.triggerDeploymentPipeline(deployRequestDto);
         return ApiResponseDto.defaultOK();
     }
 
     @PostMapping("/deploy/result")
-    public ApiResponseDto<?> receiveDeployResult(@RequestBody @Valid SmartContractDeployResultDto resultDto) {
-        smartContractService.postDeployProcess(resultDto);
+    public ApiResponseDto<?> receiveDeployResult(@RequestBody @Valid DeployDto.Response deployResponseDto) {
+        smartContractService.postDeployProcess(deployResponseDto);
 
         return ApiResponseDto.defaultOK();
     }
