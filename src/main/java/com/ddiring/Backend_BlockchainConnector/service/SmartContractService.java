@@ -95,7 +95,11 @@ public class SmartContractService {
 
     @Transactional
     public void postDeployProcess(DeployDto.Response deployResponseDto) {
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(deployResponseDto.getProjectId())
+        if (deploymentRepository.existsByProjectId(deployResponseDto.getProjectId())) {
+            throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
+        }
+
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndRequestStatus(deployResponseDto.getProjectId(), BlockchainRequestStatus.PENDING)
                 .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
 
         if (!"success".equals(deployResponseDto.getStatus())) {
