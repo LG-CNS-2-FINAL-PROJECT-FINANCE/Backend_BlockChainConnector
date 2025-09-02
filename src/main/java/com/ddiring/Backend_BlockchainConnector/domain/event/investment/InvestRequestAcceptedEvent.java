@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class InvestRequestAcceptedEvent {
-    public static final String TOPIC = "INVESTMENT.REQUEST";
+    public static final String TOPIC = "INVESTMENT";
 
     // --- Header ---
     private String eventId;
@@ -31,7 +31,7 @@ public class InvestRequestAcceptedEvent {
 
     public static InvestRequestAcceptedEvent of(String projectId) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + ".ACCEPTED";
+        String eventType = TOPIC + ".REQUEST.ACCEPTED";
 
         return InvestRequestAcceptedEvent.builder()
                 .eventId(uuid)

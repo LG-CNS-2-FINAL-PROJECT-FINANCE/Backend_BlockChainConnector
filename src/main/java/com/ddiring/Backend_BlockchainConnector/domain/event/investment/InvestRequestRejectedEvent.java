@@ -9,7 +9,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class InvestRequestRejectedEvent {
-    public static final String TOPIC = "INVESTMENT.REQUEST";
+    public static final String TOPIC = "INVESTMENT";
 
     // --- Header ---
     private String eventId;
@@ -31,7 +31,7 @@ public class InvestRequestRejectedEvent {
 
     public static InvestRequestRejectedEvent of(String projectId, String reason) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + ".REJECTED";
+        String eventType = TOPIC + ".REQUEST.REJECTED";
 
         return InvestRequestRejectedEvent.builder()
                 .eventId(uuid)

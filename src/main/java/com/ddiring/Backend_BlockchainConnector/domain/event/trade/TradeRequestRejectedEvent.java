@@ -12,7 +12,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class TradeRequestRejectedEvent {
-    public static final String TOPIC = "TRADE.REQUEST";
+    public static final String TOPIC = "TRADE";
 
     private String eventId;
     private String eventType;
@@ -33,7 +33,7 @@ public class TradeRequestRejectedEvent {
 
     public static TradeRequestRejectedEvent of(String projectId, Long tradeId, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
-        String eventType = TOPIC + ".REJECTED";
+        String eventType = TOPIC + ".REQUEST.REJECTED";
 
         return TradeRequestRejectedEvent.builder()
                 .eventId(uuid)
