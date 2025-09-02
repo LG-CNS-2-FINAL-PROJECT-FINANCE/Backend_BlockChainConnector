@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DepositRepository extends JpaRepository<Deposit,Long> {
+    Boolean existsBySellIdAndDepositType(Long sellId, Deposit.DepositType depositType);
 }

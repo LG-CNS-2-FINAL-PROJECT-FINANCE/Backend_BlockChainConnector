@@ -18,6 +18,7 @@ import com.ddiring.Backend_BlockchainConnector.repository.DepositRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
+import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -82,6 +83,10 @@ public class SmartContractTradeService {
 
     @Transactional
     public void deposit(DepositDto depositDto) {
+        if (depositRepository.existsBySellIdAndDepositType(depositDto.getSellId(), Deposit.DepositType.DEPOSIT)) {
+            throw new EntityExistsException("이미 처리된 토큰 예치 요청입니다.");
+        }
+
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(depositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
@@ -144,6 +149,10 @@ public class SmartContractTradeService {
 
     @Transactional
     public void cancelDeposit(DepositDto cancelDepositDto) {
+        if (depositRepository.existsBySellIdAndDepositType(cancelDepositDto.getSellId(), Deposit.DepositType.CANCEL_DEPOSIT)) {
+            throw new EntityExistsException("이미 처리된 토큰 예치 취소 요청입니다.");
+        }
+
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(cancelDepositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
@@ -204,6 +213,10 @@ public class SmartContractTradeService {
 
     @Transactional
     public void trade(TradeDto tradeDto) {
+        if (blockchainLogRepository.existsByProjectIdAndOrderIdAndRequestType(tradeDto.getProjectId(), tradeDto.getTradeId(), BlockchainRequestType.TRADE)) {
+            throw new EntityExistsException("이미 처리 중이거나 처리된 거래입니다.");
+        }
+
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(tradeDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));

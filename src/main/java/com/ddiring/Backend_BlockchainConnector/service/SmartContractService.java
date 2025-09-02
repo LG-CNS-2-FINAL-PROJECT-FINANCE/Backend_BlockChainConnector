@@ -5,6 +5,8 @@ import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
@@ -12,6 +14,7 @@ import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepositor
 import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
+import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +25,8 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -45,9 +46,16 @@ public class SmartContractService {
 
     @Transactional
     public void triggerDeploymentPipeline(DeployDto.Request deployRequestDto) {
+        if (deploymentRepository.existsByProjectId(deployRequestDto.getProjectId())) {
+            throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
+        }
+
+        if (blockchainLogRepository.existsByProjectIdAndRequestStatus(deployRequestDto.getProjectId(), BlockchainRequestStatus.PENDING)) {
+            throw new EntityExistsException("배포 요청이 진행 중입니다.");
+        }
+
         String crumbValue;
         String authHeader;
-
         try {
             String auth = jenkinsProperties.getUsername() + ":" + jenkinsProperties.getApiToken();
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
@@ -87,7 +95,11 @@ public class SmartContractService {
 
     @Transactional
     public void postDeployProcess(DeployDto.Response deployResponseDto) {
-        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectId(deployResponseDto.getProjectId())
+        if (deploymentRepository.existsByProjectId(deployResponseDto.getProjectId())) {
+            throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
+        }
+
+        BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndRequestStatus(deployResponseDto.getProjectId(), BlockchainRequestStatus.PENDING)
                 .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
 
         if (!"success".equals(deployResponseDto.getStatus())) {
@@ -128,10 +140,47 @@ public class SmartContractService {
         eventManagementService.removeSmartContract(smartContract);
     }
 
+    private InvestmentDto filterInvestRequest(InvestmentDto investmentDto) {
+        List<Long> allInvestmentIds = investmentDto.getInvestInfoList().stream()
+                .map(InvestmentDto.InvestInfo::getInvestmentId)
+                .toList();
+
+        List<BlockchainRequestStatus> targetStatuses = List.of(
+                BlockchainRequestStatus.PENDING,
+                BlockchainRequestStatus.SUCCESS
+        );
+
+        List<BlockchainLog> existingLogs = blockchainLogRepository
+                .findByProjectIdAndOrderIdInAndRequestTypeAndRequestStatusIn(
+                        investmentDto.getProjectId(),
+                        allInvestmentIds,
+                        BlockchainRequestType.INVESTMENT,
+                        targetStatuses
+                );
+
+        Set<Long> processedInvestmentIds = existingLogs.stream()
+                .map(BlockchainLog::getOrderId)
+                .collect(Collectors.toSet());
+
+        List<InvestmentDto.InvestInfo> filteredInvestInfoList = investmentDto.getInvestInfoList().stream()
+                .filter(investInfo -> !processedInvestmentIds.contains(investInfo.getInvestmentId()))
+                .toList();
+
+        if (filteredInvestInfoList.isEmpty()) {
+            log.warn("요청된 모든 투자 ID가 이미 처리 중이거나 성공한 상태입니다.");
+            throw new IllegalArgumentException("요청된 모든 투자 ID가 이미 처리 중이거나 성공한 상태입니다.");
+        }
+
+        return InvestmentDto.builder()
+                .projectId(investmentDto.getProjectId())
+                .investInfoList(filteredInvestInfoList)
+                .build();
+    }
+
     @Transactional
     public void investment(InvestmentDto investmentDto) {
         try {
-            if (investmentDto.getInvestInfoList().isEmpty()) {
+            if (investmentDto.getInvestInfoList() == null || investmentDto.getInvestInfoList().isEmpty()) {
                 log.warn("투자 요청이 존재하지 않습니다.");
                 throw new IllegalArgumentException("투자 요청이 존재하지 않습니다.");
             }
@@ -141,7 +190,8 @@ public class SmartContractService {
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
-            List<FractionalInvestmentToken.investment> investmentRequestInfoList = investmentDto.toSmartContractStruct();
+            InvestmentDto filteredInvestmentDto = filterInvestRequest(investmentDto);
+            List<FractionalInvestmentToken.investment> investmentRequestInfoList = filteredInvestmentDto.toSmartContractStruct();
             if (investmentRequestInfoList == null || investmentRequestInfoList.isEmpty()) {
                 log.warn("변환된 투자 요청을 찾을 수 없습니다.");
                 throw new IllegalArgumentException("변환된 투자 요청을 찾을 수 없습니다.");
