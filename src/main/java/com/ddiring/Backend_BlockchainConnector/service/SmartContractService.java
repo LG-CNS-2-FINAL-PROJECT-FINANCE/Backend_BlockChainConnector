@@ -140,10 +140,47 @@ public class SmartContractService {
         eventManagementService.removeSmartContract(smartContract);
     }
 
+    private InvestmentDto filterInvestRequest(InvestmentDto investmentDto) {
+        List<Long> allInvestmentIds = investmentDto.getInvestInfoList().stream()
+                .map(InvestmentDto.InvestInfo::getInvestmentId)
+                .toList();
+
+        List<BlockchainRequestStatus> targetStatuses = List.of(
+                BlockchainRequestStatus.PENDING,
+                BlockchainRequestStatus.SUCCESS
+        );
+
+        List<BlockchainLog> existingLogs = blockchainLogRepository
+                .findByProjectIdAndOrderIdInAndRequestTypeAndRequestStatusIn(
+                        investmentDto.getProjectId(),
+                        allInvestmentIds,
+                        BlockchainRequestType.INVESTMENT,
+                        targetStatuses
+                );
+
+        Set<Long> processedInvestmentIds = existingLogs.stream()
+                .map(BlockchainLog::getOrderId)
+                .collect(Collectors.toSet());
+
+        List<InvestmentDto.InvestInfo> filteredInvestInfoList = investmentDto.getInvestInfoList().stream()
+                .filter(investInfo -> !processedInvestmentIds.contains(investInfo.getInvestmentId()))
+                .toList();
+
+        if (filteredInvestInfoList.isEmpty()) {
+            log.warn("요청된 모든 투자 ID가 이미 처리 중이거나 성공한 상태입니다.");
+            throw new IllegalArgumentException("요청된 모든 투자 ID가 이미 처리 중이거나 성공한 상태입니다.");
+        }
+
+        return InvestmentDto.builder()
+                .projectId(investmentDto.getProjectId())
+                .investInfoList(filteredInvestInfoList)
+                .build();
+    }
+
     @Transactional
     public void investment(InvestmentDto investmentDto) {
         try {
-            if (investmentDto.getInvestInfoList().isEmpty()) {
+            if (investmentDto.getInvestInfoList() == null || investmentDto.getInvestInfoList().isEmpty()) {
                 log.warn("투자 요청이 존재하지 않습니다.");
                 throw new IllegalArgumentException("투자 요청이 존재하지 않습니다.");
             }
@@ -153,7 +190,8 @@ public class SmartContractService {
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
-            List<FractionalInvestmentToken.investment> investmentRequestInfoList = investmentDto.toSmartContractStruct();
+            InvestmentDto filteredInvestmentDto = filterInvestRequest(investmentDto);
+            List<FractionalInvestmentToken.investment> investmentRequestInfoList = filteredInvestmentDto.toSmartContractStruct();
             if (investmentRequestInfoList == null || investmentRequestInfoList.isEmpty()) {
                 log.warn("변환된 투자 요청을 찾을 수 없습니다.");
                 throw new IllegalArgumentException("변환된 투자 요청을 찾을 수 없습니다.");
