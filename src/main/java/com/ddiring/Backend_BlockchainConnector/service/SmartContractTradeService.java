@@ -149,6 +149,10 @@ public class SmartContractTradeService {
 
     @Transactional
     public void cancelDeposit(DepositDto cancelDepositDto) {
+        if (depositRepository.existsBySellIdAndDepositType(cancelDepositDto.getSellId(), Deposit.DepositType.CANCEL_DEPOSIT)) {
+            throw new EntityExistsException("이미 처리된 토큰 예치 취소 요청입니다.");
+        }
+
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(cancelDepositDto.getProjectId())
                     .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
