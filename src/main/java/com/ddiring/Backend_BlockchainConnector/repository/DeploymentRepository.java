@@ -12,9 +12,9 @@ import java.util.Optional;
 public interface DeploymentRepository extends JpaRepository<Deployment, Long> {
     List<Deployment> findAllByIsActive(Boolean isActive);
 
-    Optional<Deployment> findBySmartContractAddress(String contractAddress);
-
     Boolean existsBySmartContractAddressOrProjectId(String contractAddress, String projectId);
 
     Optional<Deployment> findByProjectId(@NotBlank String projectId);
+
+    Boolean existsByProjectId(@NotBlank String projectId);
 }
