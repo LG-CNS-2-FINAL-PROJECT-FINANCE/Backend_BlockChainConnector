@@ -5,6 +5,8 @@ import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestStatus;
+import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestType;
 import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
@@ -12,6 +14,7 @@ import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepositor
 import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
 import com.ddiring.contract.FractionalInvestmentToken;
+import jakarta.persistence.EntityExistsException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +25,8 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -45,9 +46,16 @@ public class SmartContractService {
 
     @Transactional
     public void triggerDeploymentPipeline(DeployDto.Request deployRequestDto) {
+        if (deploymentRepository.existsByProjectId(deployRequestDto.getProjectId())) {
+            throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
+        }
+
+        if (blockchainLogRepository.existsByProjectIdAndRequestStatus(deployRequestDto.getProjectId(), BlockchainRequestStatus.PENDING)) {
+            throw new EntityExistsException("배포 요청이 진행 중입니다.");
+        }
+
         String crumbValue;
         String authHeader;
-
         try {
             String auth = jenkinsProperties.getUsername() + ":" + jenkinsProperties.getApiToken();
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
