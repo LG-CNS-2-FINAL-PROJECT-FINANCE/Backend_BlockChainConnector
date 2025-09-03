@@ -38,14 +38,14 @@ public class KafkaMessageProducer {
         sendMessage(DeployFailedEvent.TOPIC, message);
     }
 
-    public void sendInvestRequestAcceptedEvent(String projectId) {
-        InvestRequestAcceptedEvent message = InvestRequestAcceptedEvent.of(projectId);
+    public void sendInvestRequestAcceptedEvent(String projectId, Long investmentId, String investorAddress, Long tokenAmount) {
+        InvestRequestAcceptedEvent message = InvestRequestAcceptedEvent.of(projectId, investmentId, investorAddress, tokenAmount);
         log.info("Sending InvestRequestAcceptedEvent to topic {}: {}", InvestRequestAcceptedEvent.TOPIC, message);
         sendMessage(InvestRequestAcceptedEvent.TOPIC, message);
     }
 
-    public void sendInvestRequestRejectedEvent(String projectId, String errorMessage) {
-        InvestRequestRejectedEvent message = InvestRequestRejectedEvent.of(projectId, errorMessage);
+    public void sendInvestRequestRejectedEvent(String projectId, Long investmentId, String investorAddress, Long tokenAmount, String errorMessage) {
+        InvestRequestRejectedEvent message = InvestRequestRejectedEvent.of(projectId, investmentId, investorAddress, tokenAmount, errorMessage);
         log.info("Sending InvestRequestRejectedEvent to topic {}: {}", InvestRequestRejectedEvent.TOPIC, message);
         sendMessage(InvestRequestRejectedEvent.TOPIC, message);
     }
@@ -56,8 +56,8 @@ public class KafkaMessageProducer {
         sendMessage(InvestSucceededEvent.TOPIC, message);
     }
 
-    public void sendInvestFailedEvent(String projectId, Long investmentId, String errorType, String errorMessage) {
-        InvestFailedEvent message = InvestFailedEvent.of(projectId, investmentId, errorType, errorMessage);
+    public void sendInvestFailedEvent(String projectId, Long investmentId, String investorAddress, Long tokenAmount, String errorType, String errorMessage) {
+        InvestFailedEvent message = InvestFailedEvent.of(projectId, investmentId, investorAddress, tokenAmount, errorType, errorMessage);
         log.info("Sending InvestFailedEvent to topic {}: {}", InvestFailedEvent.TOPIC, message);
         sendMessage(InvestFailedEvent.TOPIC, message);
     }
@@ -86,26 +86,26 @@ public class KafkaMessageProducer {
         sendMessage(DepositCancelFailedEvent.TOPIC, message);
     }
 
-    public void sendTradeRequestAcceptedEvent(String projectId, Long tradeId) {
-        TradeRequestAcceptedEvent message = TradeRequestAcceptedEvent.of(projectId, tradeId);
+    public void sendTradeRequestAcceptedEvent(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount) {
+        TradeRequestAcceptedEvent message = TradeRequestAcceptedEvent.of(projectId, tradeId, buyerAddress, sellerAddress, tradeAmount);
         log.info("Sending TradeRequestAcceptedEvent to topic {}: {}", TradeRequestAcceptedEvent.TOPIC, message);
         sendMessage(TradeRequestAcceptedEvent.TOPIC, message);
     }
 
-    public void sendTradeRequestRejectedEvent(String projectId, Long tradeId, String errorMessage) {
-        TradeRequestRejectedEvent message = TradeRequestRejectedEvent.of(projectId, tradeId, errorMessage);
+    public void sendTradeRequestRejectedEvent(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount, String errorMessage) {
+        TradeRequestRejectedEvent message = TradeRequestRejectedEvent.of(projectId, tradeId, buyerAddress, sellerAddress, tradeAmount, errorMessage);
         log.info("Sending TradeRequestRejectedEvent to topic {}: {}", TradeRequestRejectedEvent.TOPIC, message);
         sendMessage(TradeRequestRejectedEvent.TOPIC, message);
     }
 
-    public void sendTradeSucceededEvent(String projectId, Long tradeId, String buyerAddress, Long buyerTokenAmount, String sellerAddress, Long sellerTokenAmount) {
-        TradeSucceededEvent message = TradeSucceededEvent.of(projectId, tradeId, buyerAddress, buyerTokenAmount, sellerAddress, sellerTokenAmount);
+    public void sendTradeSucceededEvent(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount) {
+        TradeSucceededEvent message = TradeSucceededEvent.of(projectId, tradeId, buyerAddress, sellerAddress, tradeAmount);
         log.info("Sending TradeSucceededEvent to topic {}: {}", TradeSucceededEvent.TOPIC, message);
         sendMessage(TradeSucceededEvent.TOPIC, message);
     }
 
-    public void sendTradeFailedEvent(String projectId, Long tradeId, String errorType, String errorMessage) {
-        TradeFailedEvent message = TradeFailedEvent.of(projectId, tradeId, errorType, errorMessage);
+    public void sendTradeFailedEvent(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount, String errorType, String errorMessage) {
+        TradeFailedEvent message = TradeFailedEvent.of(projectId, tradeId, buyerAddress, sellerAddress, tradeAmount, errorType, errorMessage);
         log.info("Sending TradeFailedEvent to topic {}: {}", TradeFailedEvent.TOPIC, message);
         sendMessage(TradeFailedEvent.TOPIC, message);
     }

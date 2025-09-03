@@ -26,10 +26,13 @@ public class InvestRequestAcceptedEvent {
     @AllArgsConstructor
     public static class InvestRequestAcceptedPayload {
         private String projectId;
+        private Long investmentId;
+        private String investorAddress;
+        private Long tokenAmount;
         private String status;
     }
 
-    public static InvestRequestAcceptedEvent of(String projectId) {
+    public static InvestRequestAcceptedEvent of(String projectId, Long investmentId, String investorAddress, Long tokenAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".REQUEST.ACCEPTED";
 
@@ -39,6 +42,9 @@ public class InvestRequestAcceptedEvent {
                 .timestamp(Instant.now())
                 .payload(InvestRequestAcceptedPayload.builder()
                         .projectId(projectId)
+                        .investmentId(investmentId)
+                        .investorAddress(investorAddress)
+                        .tokenAmount(tokenAmount)
                         .status("ACCEPTED")
                         .build()
                 )

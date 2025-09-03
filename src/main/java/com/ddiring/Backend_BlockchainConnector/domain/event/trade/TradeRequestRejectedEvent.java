@@ -27,11 +27,14 @@ public class TradeRequestRejectedEvent {
     public static class TradeRequestRejectedPayload {
         private String projectId;
         private Long tradeId;
+        private String buyerAddress;
+        private String sellerAddress;
+        private Long tradeAmount;
         private String status;
         private String errorMessage;
     }
 
-    public static TradeRequestRejectedEvent of(String projectId, Long tradeId, String errorMessage) {
+    public static TradeRequestRejectedEvent of(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".REQUEST.REJECTED";
 
@@ -42,6 +45,9 @@ public class TradeRequestRejectedEvent {
                 .payload(TradeRequestRejectedPayload.builder()
                         .projectId(projectId)
                         .tradeId(tradeId)
+                        .buyerAddress(buyerAddress)
+                        .sellerAddress(sellerAddress)
+                        .tradeAmount(tradeAmount)
                         .status("REJECTED")
                         .errorMessage(errorMessage)
                         .build()
