@@ -30,12 +30,14 @@ public class InvestFailedEvent {
     public static class InvestFailedPayload {
         private String projectId;
         private Long investmentId;
+        private String investorAddress;
+        private Long tokenAmount;
         private String status;
         private String errorType;
         private String errorMessage;
     }
 
-    public static InvestFailedEvent of(String projectId, Long investmentId, String errorType, String errorMessage) {
+    public static InvestFailedEvent of(String projectId, Long investmentId, String investorAddress, Long tokenAmount, String errorType, String errorMessage) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".FAILED";
 
@@ -46,6 +48,8 @@ public class InvestFailedEvent {
                 .payload(InvestFailedPayload.builder()
                         .projectId(projectId)
                         .investmentId(investmentId)
+                        .investorAddress(investorAddress)
+                        .tokenAmount(tokenAmount)
                         .status("FAILED")
                         .errorType(errorType)
                         .errorMessage(errorMessage)
