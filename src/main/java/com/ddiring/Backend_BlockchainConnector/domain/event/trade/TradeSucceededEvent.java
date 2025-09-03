@@ -30,13 +30,11 @@ public class TradeSucceededEvent {
         private Long tradeId;
         private String status;
         private String buyerAddress;
-        private Long buyerTokenAmount;
         private String sellerAddress;
-        private Long sellerTokenAmount;
+        private Long tradeAmount;
     }
 
-    public static TradeSucceededEvent of(String projectId, Long tradeId, String buyerAddress, Long buyerTokenAmount,
-                                          String sellerAddress, Long sellerTokenAmount) {
+    public static TradeSucceededEvent of(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".SUCCEEDED";
 
@@ -49,9 +47,8 @@ public class TradeSucceededEvent {
                         .tradeId(tradeId)
                         .status("SUCCEEDED")
                         .buyerAddress(buyerAddress)
-                        .buyerTokenAmount(buyerTokenAmount)
                         .sellerAddress(sellerAddress)
-                        .sellerTokenAmount(sellerTokenAmount)
+                        .tradeAmount(tradeAmount)
                         .build()
                 )
                 .build();

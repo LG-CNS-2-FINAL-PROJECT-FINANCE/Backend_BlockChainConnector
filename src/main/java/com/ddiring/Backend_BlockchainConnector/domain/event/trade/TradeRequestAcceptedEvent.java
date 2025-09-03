@@ -28,10 +28,13 @@ public class TradeRequestAcceptedEvent {
     public static class TradeRequestAcceptedPayload {
         private String projectId;
         private Long tradeId;
+        private String buyerAddress;
+        private String sellerAddress;
+        private Long tradeAmount;
         private String status;
     }
 
-    public static TradeRequestAcceptedEvent of(String projectId, Long tradeId) {
+    public static TradeRequestAcceptedEvent of(String projectId, Long tradeId, String buyerAddress, String sellerAddress, Long tradeAmount) {
         String uuid = java.util.UUID.randomUUID().toString();
         String eventType = TOPIC + ".REQUEST.ACCEPTED";
 
@@ -43,6 +46,9 @@ public class TradeRequestAcceptedEvent {
                         .projectId(projectId)
                         .tradeId(tradeId)
                         .status("ACCEPTED")
+                        .buyerAddress(buyerAddress)
+                        .sellerAddress(sellerAddress)
+                        .tradeAmount(tradeAmount)
                         .build()
                 )
                 .build();
