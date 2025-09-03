@@ -201,7 +201,14 @@ public class SmartContractService {
             smartContract.requestInvestment(investmentRequestInfoList).sendAsync()
                     .thenAccept(response -> {
                         log.info("Investment request accepted: {}", response.getLogs());
-                        kafkaMessageProducer.sendInvestRequestAcceptedEvent(investmentDto.getProjectId());
+                        filteredInvestmentDto.getInvestInfoList().forEach(investmentInfo -> {
+                            kafkaMessageProducer.sendInvestRequestAcceptedEvent(
+                                    investmentDto.getProjectId(),
+                                    investmentInfo.getInvestmentId(),
+                                    investmentInfo.getInvestorAddress(),
+                                    investmentInfo.getTokenAmount()
+                            );
+                        });
 
                         Stream<BlockchainLog> investLogList = investmentDto.getInvestInfoList().stream().map(investInfo -> {
                             return BlockchainLogMapper.toEntityForInvestment(contractInfo, response.getTransactionHash(), investInfo.getInvestmentId());
@@ -211,7 +218,15 @@ public class SmartContractService {
                     })
                     .exceptionally(throwable -> {
                         log.error("Investment request Error: {}", throwable.getMessage());
-                        kafkaMessageProducer.sendInvestRequestRejectedEvent(investmentDto.getProjectId(), throwable.getMessage());
+                        filteredInvestmentDto.getInvestInfoList().forEach(investmentInfo -> {
+                            kafkaMessageProducer.sendInvestRequestRejectedEvent(
+                                    investmentDto.getProjectId(),
+                                    investmentInfo.getInvestmentId(),
+                                    investmentInfo.getInvestorAddress(),
+                                    investmentInfo.getTokenAmount(),
+                                    throwable.getMessage()
+                            );
+                        });
                         return null;
                     });
         } catch (Exception e) {
