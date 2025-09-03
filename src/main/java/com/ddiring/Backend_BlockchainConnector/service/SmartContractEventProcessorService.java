@@ -80,6 +80,8 @@ public class SmartContractEventProcessorService {
         }
 
         Long investmentId = Long.valueOf(event.investmentId);
+        String buyer = event.buyer;
+        Long tokenAmount = event.tokenAmount.longValue();
 
         EventTracker eventTracker = eventTrackerRepository
                 .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.INVESTMENT_FAILED, event.log.getAddress())
@@ -95,7 +97,7 @@ public class SmartContractEventProcessorService {
         blockchainLog.updateOracleFailureResponse(OracleEventType.INVESTMENT_FAILED, event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
 
-        kafkaMessageProducer.sendInvestFailedEvent(strProjectId, investmentId, blockchainLog.getOracleEventType().name(), event.reason);
+        kafkaMessageProducer.sendInvestFailedEvent(strProjectId, investmentId, buyer, tokenAmount, blockchainLog.getOracleEventType().name(), event.reason);
     }
 
     @Transactional
