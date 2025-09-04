@@ -46,6 +46,8 @@ public class SmartContractService {
 
     @Transactional
     public void triggerDeploymentPipeline(DeployDto.Request deployRequestDto) {
+        log.info("[스마트 컨트랙트 배포 요청]");
+
         if (deploymentRepository.existsByProjectId(deployRequestDto.getProjectId())) {
             throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
         }
@@ -95,6 +97,8 @@ public class SmartContractService {
 
     @Transactional
     public void postDeployProcess(DeployDto.Response deployResponseDto) {
+        log.info("[스마트 컨트랙트 배포 결과 응답]");
+
         if (deploymentRepository.existsByProjectId(deployResponseDto.getProjectId())) {
             throw new EntityExistsException("이미 배포된 스마트 컨트랙트입니다.");
         }
@@ -140,6 +144,8 @@ public class SmartContractService {
     }
 
     public void terminateSmartContract(TerminationDto terminationDto) {
+        log.info("[스마트 컨트랙트 비활성화]");
+
         Deployment smartContract = deploymentRepository.findByProjectId(terminationDto.getProjectId())
                 .orElseGet(() -> {
                     log.error("찾을 수 없는 프로젝트 번호: {} 입니다.", terminationDto.getProjectId());
@@ -188,6 +194,8 @@ public class SmartContractService {
 
     @Transactional
     public void investment(InvestmentDto investmentDto) {
+        log.info("[스마트 컨트랙트 투자 요청 처리]");
+
         try {
             if (investmentDto.getInvestInfoList() == null || investmentDto.getInvestInfoList().isEmpty()) {
                 log.warn("투자 요청이 존재하지 않습니다.");
@@ -233,6 +241,8 @@ public class SmartContractService {
     }
 
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
+        log.info("[사용자 잔액 조회]");
+
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(balanceDto.getProjectId())
                     .orElseGet(() -> {
