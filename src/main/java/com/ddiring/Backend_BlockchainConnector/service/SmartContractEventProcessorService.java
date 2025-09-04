@@ -38,12 +38,18 @@ public class SmartContractEventProcessorService {
         // 1. 블록체인 로그 엔티티 조회 (DB 저장 이전 상태)
         BlockchainLog blockchainLog = blockchainLogRepository
                 .findByProjectIdAndOrderIdAndRequestType(strProjectId, investmentId, BlockchainRequestType.INVESTMENT)
-                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Investment 성공] 매칭되는 블록체인 기록을 찾을 수 없습니다. projectId: {}, orderId: {}", strProjectId, investmentId);
+                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                });
 
         try {
             EventTracker eventTracker = eventTrackerRepository
                     .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.INVESTMENT_SUCCESSFUL, event.log.getAddress())
-                    .orElseThrow(() -> new NotFound("INVESTMENT_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다."));
+                    .orElseGet(() -> {
+                        log.error("[Investment 성공] INVESTMENT_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다. Address: {}", event.log.getAddress());
+                        throw new NotFound("INVESTMENT_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다.");
+                    });
             eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE));
             eventTrackerRepository.save(eventTracker);
 
@@ -85,7 +91,10 @@ public class SmartContractEventProcessorService {
 
         EventTracker eventTracker = eventTrackerRepository
                 .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.INVESTMENT_FAILED, event.log.getAddress())
-                .orElseThrow(() -> new NotFound("INVESTMENT_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Investment 실패] INVESTMENT_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다. Address: {}", event.log.getAddress());
+                    throw new NotFound("INVESTMENT_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다.");
+                });
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
@@ -93,7 +102,10 @@ public class SmartContractEventProcessorService {
         log.info("[Investment 실패] 프로젝트 번호: {}, 투자 번호 : {}, 사유: {}, 상태 코드: {}", strProjectId, investmentId, event.reason, event.status);
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.investmentId), BlockchainRequestType.INVESTMENT)
-                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Investment 실패] 매칭되는 블록체인 기록을 찾을 수 없습니다. projectId: {}, orderId: {}", strProjectId, investmentId);
+                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                });
         blockchainLog.updateOracleFailureResponse(OracleEventType.INVESTMENT_FAILED, event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
 
@@ -109,7 +121,10 @@ public class SmartContractEventProcessorService {
 
         EventTracker eventTracker = eventTrackerRepository
                 .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.TRADE_SUCCESSFUL, event.log.getAddress())
-                .orElseThrow(() -> new NotFound("TRADE_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Trade 실패] TRADE_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다. Address: {}", event.log.getAddress());
+                    throw new NotFound("TRADE_SUCCESSFUL에 매핑되는 EventTracker를 찾을 수 없습니다.");
+                });
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
@@ -117,7 +132,10 @@ public class SmartContractEventProcessorService {
         log.info("[Trade 성공] 프로젝트 번호 : {}, 거래 번호: {}, 판매자: {}, 구매자: {}, 금액: {}", Byte32Converter.convertBytes32ToString(event.projectId), tradeId, seller, buyer, tokenAmount);
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.tradeId), BlockchainRequestType.TRADE)
-                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Trade 성공] 매칭되는 블록체인 기록을 찾을 수 없습니다. projectId: {}, orderId: {}", strProjectId, tradeId);
+                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                });
         blockchainLog.updateOracleSuccessResponse(OracleEventType.TRADE_SUCCESSFUL, event.log.getTransactionHash());
         blockchainLogRepository.save(blockchainLog);
 
@@ -137,7 +155,10 @@ public class SmartContractEventProcessorService {
 
         EventTracker eventTracker = eventTrackerRepository
                 .findByOracleEventTypeAndDeploymentId_SmartContractAddress(OracleEventType.TRADE_FAILED, event.log.getAddress())
-                .orElseThrow(() -> new NotFound("TRADE_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Trade 실패] TRADE_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다. Address: {}", event.log.getAddress());
+                    throw new NotFound("TRADE_FAILED에 매핑되는 EventTracker를 찾을 수 없습니다.");
+                });
         eventTracker.updateBlockNumber(event.log.getBlockNumber().add(BigInteger.ONE)); // 현재 블록의 다음 번호부터 이벤트 리스닝
         eventTrackerRepository.save(eventTracker);
 
@@ -145,7 +166,10 @@ public class SmartContractEventProcessorService {
         log.info("[Trade 실패] 프로젝트 번호: {}, 거래 번호 : {}, 사유: {}, 상태 코드: {}", Byte32Converter.convertBytes32ToString(event.projectId), tradeId, event.reason, event.status);
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(strProjectId, Long.valueOf(event.tradeId), BlockchainRequestType.TRADE)
-                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    log.error("[Trade 실패] 매칭되는 블록체인 기록을 찾을 수 없습니다. projectId: {}, orderId: {}", strProjectId, tradeId);
+                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                });
         blockchainLog.updateOracleFailureResponse(OracleEventType.TRADE_FAILED, event.log.getTransactionHash(), OracleEventErrorType.fromValue(event.status.longValue()), event.reason);
         blockchainLogRepository.save(blockchainLog);
 
