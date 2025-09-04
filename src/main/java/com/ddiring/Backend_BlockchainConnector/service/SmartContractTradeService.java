@@ -41,6 +41,8 @@ public class SmartContractTradeService {
 
     @Transactional
     public PermitSignatureDto.Response getSignature(@Valid PermitSignatureDto.Request permitSignatureDto) {
+        log.info("[서명 요청]");
+        
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(permitSignatureDto.getProjectId())
                     .orElseGet(() -> {
@@ -86,6 +88,8 @@ public class SmartContractTradeService {
 
     @Transactional
     public void deposit(DepositDto depositDto) {
+        log.info("[토큰 예치 요청]");
+        
         if (depositRepository.existsBySellIdAndDepositType(depositDto.getSellId(), Deposit.DepositType.DEPOSIT)) {
             throw new EntityExistsException("이미 처리된 토큰 예치 요청입니다.");
         }
@@ -161,6 +165,8 @@ public class SmartContractTradeService {
 
     @Transactional
     public void cancelDeposit(DepositDto cancelDepositDto) {
+        log.info("[토큰 예치 취소 요청]");
+
         if (depositRepository.existsBySellIdAndDepositType(cancelDepositDto.getSellId(), Deposit.DepositType.CANCEL_DEPOSIT)) {
             throw new EntityExistsException("이미 처리된 토큰 예치 취소 요청입니다.");
         }
@@ -234,6 +240,8 @@ public class SmartContractTradeService {
 
     @Transactional
     public void trade(TradeDto tradeDto) {
+        log.info("[토큰 거래 요청]");
+        
         if (blockchainLogRepository.existsByProjectIdAndOrderIdAndRequestType(tradeDto.getProjectId(), tradeDto.getTradeId(), BlockchainRequestType.TRADE)) {
             throw new EntityExistsException("이미 처리 중이거나 처리된 거래입니다.");
         }
