@@ -100,7 +100,10 @@ public class SmartContractService {
         }
 
         BlockchainLog blockchainLog = blockchainLogRepository.findByProjectIdAndRequestStatus(deployResponseDto.getProjectId(), BlockchainRequestStatus.PENDING)
-                .orElseThrow(() -> new NotFound("배포 요청한 기록이 없습니다."));
+                .orElseGet(() -> {
+                    log.error("배포 요청한 기록이 없습니다. 입력받은 프로젝트 번호 : {}", deployResponseDto.getAddress());
+                    throw new NotFound("배포 요청한 기록이 없습니다.");
+                });
 
         if (!"success".equals(deployResponseDto.getStatus())) {
             log.error("스마트 컨트랙트 배포 실패: {}", deployResponseDto.getStatus());
@@ -115,7 +118,10 @@ public class SmartContractService {
 
             EthGetTransactionReceipt ethGetTransactionReceipt = contractWrapper.getWeb3j().ethGetTransactionReceipt(deployResponseDto.getTransactionHash()).send();
             TransactionReceipt transactionReceipt = ethGetTransactionReceipt.getTransactionReceipt()
-                    .orElseThrow(() -> new NotFound("Can not get Transaction Hash"));
+                    .orElseGet(() -> {
+                        log.error("트랜잭션 해시를 가져 올 수 없습니다.");
+                        throw new NotFound("트랜잭션 해시를 가져 올 수 없습니다.");
+                    });
 
             Deployment contractInfo = eventManagementService.addSmartContract(
                 deployResponseDto.getProjectId(),
@@ -135,7 +141,10 @@ public class SmartContractService {
 
     public void terminateSmartContract(TerminationDto terminationDto) {
         Deployment smartContract = deploymentRepository.findByProjectId(terminationDto.getProjectId())
-                .orElseThrow(() -> new NotFound("찾을 수 없는 프로젝트입니다."));
+                .orElseGet(() -> {
+                    log.error("찾을 수 없는 프로젝트 번호: {} 입니다.", terminationDto.getProjectId());
+                    throw new NotFound("찾을 수 없는 프로젝트입니다.");
+                });
 
         eventManagementService.removeSmartContract(smartContract);
     }
@@ -186,7 +195,10 @@ public class SmartContractService {
             }
 
             Deployment contractInfo = deploymentRepository.findByProjectId(investmentDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+                    .orElseGet(() -> {
+                        log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", investmentDto.getProjectId());
+                        throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                    });
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
@@ -223,7 +235,10 @@ public class SmartContractService {
     public BalanceDto.Response getBalance(BalanceDto.Request balanceDto) {
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(balanceDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+                    .orElseGet(() -> {
+                        log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", balanceDto.getProjectId());
+                        throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                    });
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 

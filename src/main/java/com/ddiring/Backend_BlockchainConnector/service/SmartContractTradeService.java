@@ -43,7 +43,10 @@ public class SmartContractTradeService {
     public PermitSignatureDto.Response getSignature(@Valid PermitSignatureDto.Request permitSignatureDto) {
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(permitSignatureDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+                    .orElseGet(() -> {
+                        log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", permitSignatureDto.getProjectId());
+                        throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                    });
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
@@ -89,7 +92,10 @@ public class SmartContractTradeService {
 
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(depositDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+                    .orElseGet(() -> {
+                        log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", depositDto.getProjectId());
+                        throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                    });
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
@@ -112,7 +118,10 @@ public class SmartContractTradeService {
                         log.info("[Smart Contract] 예금 성공: {}", response);
 
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
-                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                                .orElseGet(() -> {
+                                    log.error("프로젝트 번호 : {} & 예금 번호 : {} 에 해당하는 매칭되는 블록체인 기록을 찾을 수 없습니다.", depositDto.getProjectId(), updatedDeposit.getDepositId());
+                                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                                });
                         depositLog.updateSuccessResponse(response.getTransactionHash());
                         blockchainLogRepository.save(depositLog);
 
@@ -127,7 +136,10 @@ public class SmartContractTradeService {
                         log.error("[Smart Contract] 토큰 예치 요청 중 에러 발생 : {}", throwable.getMessage());
 
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(depositDto.getProjectId(), updatedDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
-                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                                .orElseGet(() -> {
+                                    log.error("프로젝트 번호 : {} & 예금 번호 : {} 에 해당하는 매칭되는 블록체인 기록을 찾을 수 없습니다.", depositDto.getProjectId(), updatedDeposit.getDepositId());
+                                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                                });
                         depositLog.updateFailureResponse();
                         blockchainLogRepository.save(depositLog);
 
@@ -155,7 +167,10 @@ public class SmartContractTradeService {
 
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(cancelDepositDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+                    .orElseGet(() -> {
+                        log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", cancelDepositDto.getProjectId());
+                        throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                    });
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
@@ -178,7 +193,10 @@ public class SmartContractTradeService {
                         log.info("[Smart Contract] 예금 취소 성공: {}", response);
 
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.CANCEL_DEPOSIT)
-                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                                .orElseGet(() -> {
+                                    log.error("프로젝트 번호 : {} & 예금 번호 : {} 에 해당하는 매칭되는 블록체인 기록을 찾을 수 없습니다.", cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId());
+                                    throw new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다.");
+                                });
                         depositLog.updateSuccessResponse(response.getTransactionHash());
                         blockchainLogRepository.save(depositLog);
 
@@ -192,7 +210,10 @@ public class SmartContractTradeService {
                         log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
 
                         BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
-                                .orElseThrow(() -> new NotFound("매칭되는 블록체인 기록을 찾을 수 없습니다."));
+                                .orElseGet(() -> {
+                                    log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", cancelDepositDto.getProjectId());
+                                    throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                                });
                         depositLog.updateFailureResponse();
 
                         kafkaMessageProducer.sendDepositCancelFailedEvent(
@@ -219,7 +240,10 @@ public class SmartContractTradeService {
 
         try {
             Deployment contractInfo = deploymentRepository.findByProjectId(tradeDto.getProjectId())
-                    .orElseThrow(() -> new NotFound("스마트 컨트랙트를 찾을 수 없습니다"));
+                    .orElseGet(() -> {
+                        log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", tradeDto.getProjectId());
+                        throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                    });
 
             FractionalInvestmentToken smartContract = contractWrapper.getSmartContract(contractInfo.getSmartContractAddress());
 
