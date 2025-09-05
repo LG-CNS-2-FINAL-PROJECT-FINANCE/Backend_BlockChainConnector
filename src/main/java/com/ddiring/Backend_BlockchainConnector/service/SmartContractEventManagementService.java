@@ -284,7 +284,8 @@ public class SmartContractEventManagementService {
         }
     }
 
-    private void deactivateContract(Deployment deployment) {
+    @Transactional
+    protected void deactivateContract(Deployment deployment) {
         String address = deployment.getSmartContractAddress();
         Integer attempts = reconnectAttempts.getOrDefault(address, 0);
 
