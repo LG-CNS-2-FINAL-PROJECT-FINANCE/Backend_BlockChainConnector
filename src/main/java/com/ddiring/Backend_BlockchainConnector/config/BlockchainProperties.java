@@ -13,6 +13,7 @@ public class BlockchainProperties {
     private Etherscan etherscan;
     private Sepolia sepolia;
     private Admin admin;
+    private Web3j web3j;
 
     @Getter
     @Setter
@@ -45,5 +46,11 @@ public class BlockchainProperties {
         public static class Key {
             private String privateKey;
         }
+    }
+
+    @Getter
+    @Setter
+    public static class Web3j {
+        private Long pollingInterval;
     }
 }
