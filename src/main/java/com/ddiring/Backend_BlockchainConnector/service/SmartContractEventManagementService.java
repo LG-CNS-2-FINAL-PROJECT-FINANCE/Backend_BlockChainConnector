@@ -20,11 +20,15 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.methods.response.BaseEventResponse;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -39,6 +43,8 @@ public class SmartContractEventManagementService {
     private final EventTrackerRepository eventTrackerRepository;
 
     private final ContractWrapper contractWrapper;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     @PostConstruct
     public void init() {
@@ -234,22 +240,21 @@ public class SmartContractEventManagementService {
                 eventFunctionMap.get(oracleEventType).eventHandlerMethod().accept((BaseEventResponse) event);
             }, throwable -> {
                 log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage(), throwable);
+
+                if (throwable instanceof IOException) {
+                    log.info("WebSocket 끊김 감지. 10초 후 재연결 예약.");
+                    scheduler.schedule(() -> {
+                        try {
+                            setupAllEventFilter(deployment);
+                        } catch (Exception e) {
+                            log.error("재연결 실패: {}", e.getMessage(), e);
+                        }
+                    }, 10, TimeUnit.SECONDS);
+                }
             });
 
-        } catch (NoSuchMethodException e) {
-            log.error("[NoSuchMethodException] {}", e.getMessage());
-            return null;
-        } catch (SecurityException e) {
-            log.error("[SecurityException] {}", e.getMessage());
-            return null;
-        } catch (IllegalAccessException e) {
-            log.error("[IllegalAccessException] {}", e.getMessage());
-            return null;
-        } catch (IllegalArgumentException e) {
-            log.error("[IllegalArgumentException] {}", e.getMessage());
-            return null;
-        } catch (InvocationTargetException e) {
-            log.error("[InvocationTargetException] {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("[Event Subscription Failed] {}", e.getMessage(), e);
             return null;
         }
     }
