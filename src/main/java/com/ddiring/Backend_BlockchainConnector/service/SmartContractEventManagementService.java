@@ -38,6 +38,7 @@ public class SmartContractEventManagementService {
 
     private final Map<String, List<Disposable>> activeDisposables = new ConcurrentHashMap<>();
     private final Map<OracleEventType, EventFunctionMapping> eventFunctionMap = new EnumMap<>(OracleEventType.class);
+    private final Map<String, Integer> reconnectAttempts = new ConcurrentHashMap<>();
 
     private final DeploymentRepository deploymentRepository;
     private final EventTrackerRepository eventTrackerRepository;
@@ -45,6 +46,11 @@ public class SmartContractEventManagementService {
     private final ContractWrapper contractWrapper;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private static final int BASE_DELAY = 5;    // 초 단위
+    private static final int MAX_DELAY = 300;   // 초 단위 (5분)
+    private static final int MAX_RETRIES = 10;    // 최대 재시도 횟수
+
 
     @PostConstruct
     public void init() {
@@ -221,6 +227,9 @@ public class SmartContractEventManagementService {
             disposables.add(disposable);
         });
 
+        // 필터가 성공적으로 설정되면 재시도 횟수 초기화
+        reconnectAttempts.remove(deployment.getSmartContractAddress());
+
         log.info("모든 이벤트 필터가 설정되었습니다: {}", deployment.getSmartContractAddress());
     }
 
@@ -242,7 +251,20 @@ public class SmartContractEventManagementService {
                 log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage(), throwable);
 
                 if (throwable instanceof IOException) {
-                    log.info("WebSocket 끊김 감지. 10초 후 재연결 예약.");
+                    String address = deployment.getSmartContractAddress();
+                    int attempt = reconnectAttempts.getOrDefault(address, 0) + 1; // 재연결 횟수
+                    reconnectAttempts.put(address, attempt);
+
+                    if (attempt > MAX_RETRIES) {
+                        log.error("계약 {} 재연결 {}회 초과. 계약을 비활성화합니다.", address, MAX_RETRIES);
+                        deactivateContract(deployment);
+                        return;
+                    }
+
+                    int delay = Math.min(BASE_DELAY * (1 << (attempt - 1)), MAX_DELAY); // left shift를 통한 빠른 2배 연산
+
+                    log.warn("WebSocket 끊김 감지. {}초 후 재연결 시도 ({}번째)", delay, attempt);
+
                     scheduler.schedule(() -> {
                         try {
                             setupAllEventFilter(deployment);
@@ -257,6 +279,18 @@ public class SmartContractEventManagementService {
             log.error("[Event Subscription Failed] {}", e.getMessage(), e);
             return null;
         }
+    }
+
+    private void deactivateContract(Deployment deployment) {
+        String address = deployment.getSmartContractAddress();
+        int attempts = reconnectAttempts.getOrDefault(address, 0);
+
+        removeAllEventFilter(address);
+        deployment.deactivate();
+        deploymentRepository.save(deployment);
+        reconnectAttempts.remove(address);
+
+        log.error("계약 {} 가 {}회 이상 재연결 실패하여 비활성화되었습니다.", address, attempts);
     }
 
     private void removeAllEventFilter(String smartContractAddress) {
