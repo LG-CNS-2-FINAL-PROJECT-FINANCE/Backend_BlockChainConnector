@@ -252,7 +252,8 @@ public class SmartContractEventManagementService {
             }, throwable -> {
                 log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage(), throwable);
 
-                if (throwable instanceof IOException) {
+                Throwable rootCause = throwable.getCause();
+                if (throwable instanceof IOException || rootCause instanceof IOException) {
                     String address = deployment.getSmartContractAddress();
                     int attempt = reconnectAttempts.getOrDefault(address, 0) + 1; // 재연결 횟수
                     reconnectAttempts.put(address, attempt);
