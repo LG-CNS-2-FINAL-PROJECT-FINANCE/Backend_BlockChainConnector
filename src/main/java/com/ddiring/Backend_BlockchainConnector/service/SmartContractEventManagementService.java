@@ -273,7 +273,7 @@ public class SmartContractEventManagementService {
                         } catch (Exception e) {
                             log.error("재연결 실패: {}", e.getMessage(), e);
                         }
-                    }, 10, TimeUnit.SECONDS);
+                    }, delay, TimeUnit.SECONDS);
                 }
             });
 
