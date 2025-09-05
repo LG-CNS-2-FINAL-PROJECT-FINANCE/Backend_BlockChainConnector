@@ -170,21 +170,22 @@ public class SmartContractEventManagementService {
         removeAllEventFilter(contract.getSmartContractAddress());
     }
 
-    private void setupAllEventFilter(Deployment contract) {
-        if (contract == null || contract.getSmartContractAddress() == null) {
+    private void setupAllEventFilter(Deployment deployment) {
+        if (deployment == null || deployment.getSmartContractAddress() == null) {
             throw new IllegalArgumentException("유효하지 않은 계약 정보입니다.");
         }
 
-        if (contract.getIsActive() == null || !contract.getIsActive()) {
+        if (deployment.getIsActive() == null || !deployment.getIsActive()) {
             throw new IllegalArgumentException("비활성화된 계약입니다.");
         }
 
-        List<EventTracker> eventTrackerList = eventTrackerRepository.findAllByDeploymentId_SmartContractId(contract.getSmartContractId());
+        // 기존 구독 해제
+        removeAllEventFilter(deployment.getSmartContractAddress());
 
-        FractionalInvestmentToken myContract = contractWrapper.getSmartContract(contract.getSmartContractAddress());
+        List<EventTracker> eventTrackerList = eventTrackerRepository.findAllByDeploymentId_SmartContractId(deployment.getSmartContractId());
 
         List<Disposable> disposables = activeDisposables.computeIfAbsent(
-                contract.getSmartContractAddress(),
+                deployment.getSmartContractAddress(),
                 k -> new ArrayList<>()
         );
 
@@ -202,21 +203,22 @@ public class SmartContractEventManagementService {
             }
 
             log.info("Setting up event filter for contract: {}, event: {}, startBlockNumber: {}",
-                    contract.getSmartContractAddress(), oracleEventType, startBlockNumber);
+                    deployment.getSmartContractAddress(), oracleEventType, startBlockNumber);
 
-            Disposable disposable = setEventFilter(myContract, oracleEventType, startBlockNumber);
+            FractionalInvestmentToken contract = contractWrapper.getSmartContract(deployment.getSmartContractAddress());
+            Disposable disposable = setEventFilter(contract, oracleEventType, startBlockNumber, deployment);
             if (disposable == null) {
-                log.error("이벤트 필터 설정 실패: {} for contract: {}", oracleEventType, contract.getSmartContractAddress());
+                log.error("이벤트 필터 설정 실패: {} for contract: {}", oracleEventType, deployment.getSmartContractAddress());
                 throw new RuntimeException("이벤트 필터 설정 실패 : " + oracleEventType);
             }
 
             disposables.add(disposable);
         });
 
-        log.info("모든 이벤트 필터가 설정되었습니다: {}", contract.getSmartContractAddress());
+        log.info("모든 이벤트 필터가 설정되었습니다: {}", deployment.getSmartContractAddress());
     }
 
-    private Disposable setEventFilter(FractionalInvestmentToken contract, OracleEventType oracleEventType, BigInteger startBlockNumber) {
+    private Disposable setEventFilter(FractionalInvestmentToken contract, OracleEventType oracleEventType, BigInteger startBlockNumber, Deployment deployment) {
         try {
             Method smartContractEventMethod = contract.getClass().getMethod(
                     eventFunctionMap.get(oracleEventType).smartContractEventMethodName(),
