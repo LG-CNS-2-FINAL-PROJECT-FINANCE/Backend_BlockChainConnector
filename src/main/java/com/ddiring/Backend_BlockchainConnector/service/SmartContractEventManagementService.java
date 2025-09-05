@@ -4,6 +4,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.entity.EventTracker;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.Deployment;
 import com.ddiring.Backend_BlockchainConnector.domain.enums.OracleEventType;
 import com.ddiring.Backend_BlockchainConnector.domain.records.EventFunctionMapping;
+import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.repository.EventTrackerRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
@@ -50,6 +51,7 @@ public class SmartContractEventManagementService {
     private static final int BASE_DELAY = 5;    // 초 단위
     private static final int MAX_DELAY = 300;   // 초 단위 (5분)
     private static final int MAX_RETRIES = 10;    // 최대 재시도 횟수
+    private final KafkaMessageProducer kafkaMessageProducer;
 
 
     @PostConstruct
@@ -283,7 +285,7 @@ public class SmartContractEventManagementService {
 
     private void deactivateContract(Deployment deployment) {
         String address = deployment.getSmartContractAddress();
-        int attempts = reconnectAttempts.getOrDefault(address, 0);
+        Integer attempts = reconnectAttempts.getOrDefault(address, 0);
 
         removeAllEventFilter(address);
         deployment.deactivate();
@@ -291,6 +293,8 @@ public class SmartContractEventManagementService {
         reconnectAttempts.remove(address);
 
         log.error("계약 {} 가 {}회 이상 재연결 실패하여 비활성화되었습니다.", address, attempts);
+
+        kafkaMessageProducer.sendContractConnectFailedEvent(deployment.getProjectId(), address, attempts);
     }
 
     private void removeAllEventFilter(String smartContractAddress) {

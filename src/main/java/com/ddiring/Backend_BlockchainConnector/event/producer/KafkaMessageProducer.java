@@ -1,5 +1,6 @@
 package com.ddiring.Backend_BlockchainConnector.event.producer;
 
+import com.ddiring.Backend_BlockchainConnector.domain.event.SmartContractConnectFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeployFailedEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deploy.DeploySucceededEvent;
 import com.ddiring.Backend_BlockchainConnector.domain.event.deposit.DepositCancelFailedEvent;
@@ -108,5 +109,11 @@ public class KafkaMessageProducer {
         TradeFailedEvent message = TradeFailedEvent.of(projectId, tradeId, buyerAddress, sellerAddress, tradeAmount, errorType, errorMessage);
         log.info("Sending TradeFailedEvent to topic {}: {}", TradeFailedEvent.TOPIC, message);
         sendMessage(TradeFailedEvent.TOPIC, message);
+    }
+
+    public void sendContractConnectFailedEvent(String projectId, String contractAddress, Integer attempts) {
+        SmartContractConnectFailedEvent message = SmartContractConnectFailedEvent.of(projectId, contractAddress, attempts);
+        log.info("Sending SmartContractConnectFailedEvent to Topic {}: {}", SmartContractConnectFailedEvent.TOPIC, message);
+        sendMessage(SmartContractConnectFailedEvent.TOPIC, message);
     }
 }
