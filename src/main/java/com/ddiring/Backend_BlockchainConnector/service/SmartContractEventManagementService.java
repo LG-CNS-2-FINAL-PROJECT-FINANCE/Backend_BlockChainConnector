@@ -229,7 +229,7 @@ public class SmartContractEventManagementService {
             return ((Flowable<?>) smartContractEventMethod.invoke(
                     contract,
                     new DefaultBlockParameterNumber(startBlockNumber),
-                    DefaultBlockParameterName.LATEST
+                    null
             )).subscribe(event -> {
                 eventFunctionMap.get(oracleEventType).eventHandlerMethod().accept((BaseEventResponse) event);
             }, throwable -> {
