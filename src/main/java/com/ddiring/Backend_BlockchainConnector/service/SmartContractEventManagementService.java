@@ -46,7 +46,7 @@ public class SmartContractEventManagementService {
 
     private final ContractWrapper contractWrapper;
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private static final int BASE_DELAY = 5;    // 초 단위
     private static final int MAX_DELAY = 300;   // 초 단위 (5분)
