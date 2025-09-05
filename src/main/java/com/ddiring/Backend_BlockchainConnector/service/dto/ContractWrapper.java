@@ -7,12 +7,17 @@ import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.springframework.stereotype.Component;
 
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.http.HttpService;
+import org.web3j.protocol.websocket.WebSocketClient;
+import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.tx.gas.DynamicGasProvider;
+
+import java.net.URI;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Getter
@@ -39,7 +44,13 @@ public class ContractWrapper {
                 throw new IllegalArgumentException("Admin private key가 설정되지 않았습니다.");
             }
 
-            this.web3j = Web3j.build(new HttpService(rpcUrl));
+            WebSocketClient webSocketClient = new WebSocketClient(URI.create(rpcUrl));
+            WebSocketService webSocketService = new WebSocketService(webSocketClient, true); // true: 자동 재연결
+            webSocketService.connect();
+
+            Long pollingInterval = blockchainProperties.getWeb3j().getPollingInterval();
+            this.web3j = Web3j.build(webSocketService, pollingInterval, Executors.newSingleThreadScheduledExecutor());
+
             this.credentials = Credentials.create(privateKey);
             this.gasProvider = new DynamicGasProvider(web3j);
         } catch (IllegalArgumentException e) {
