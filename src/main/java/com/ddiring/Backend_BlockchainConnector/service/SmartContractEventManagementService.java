@@ -15,6 +15,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.springframework.stereotype.Service;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -252,8 +253,7 @@ public class SmartContractEventManagementService {
             }, throwable -> {
                 log.error("[Event Flowable Subscribe Error] {}", throwable.getMessage(), throwable);
 
-                Throwable rootCause = throwable.getCause();
-                if (throwable instanceof IOException || rootCause instanceof IOException) {
+                if (throwable instanceof IOException || throwable instanceof WebsocketNotConnectedException) {
                     String address = deployment.getSmartContractAddress();
                     int attempt = reconnectAttempts.getOrDefault(address, 0) + 1; // 재연결 횟수
                     reconnectAttempts.put(address, attempt);
