@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mariadb://${DB_URL}/${DB_NAME}?serverTimezone=UTC&useSSL=true&autoReconnect=true&useUnicode=true&characterEncoding=utf-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+    hikari:
+      connection-test-query: SELECT 1 # HikariCP 유효성 검사 추가
+      validation-timeout: 5000
+  jpa:
+    hibernate:
+      ddl-auto: update # 오직 테스트 환경에서만
+    generate-ddl: true # 오직 테스트 환경에서만 (spring.jpa.generate-ddl)
+    show-sql: true
+    open-in-view: false
+  kafka:
+    listener:
+      ack-mode: manual_immediate
+    consumer:
+      group-id: ${spring.application.name}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: latest
+      max-poll-records: 10
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false # 헤더의 타입 정보 무시
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false # 타입 헤더 추가 비활성화
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+jenkins:
+  url: ${JENKINS_URL}
+  job: ${JENKINS_JOB}
+  username: ${JENKINS_USERNAME}
+  api-token: ${JENKINS_API_TOKEN}
+  authentication-token: ${JENKINS_AUTHENTICATION_TOKEN}
+
+blockchain:
+  admin:
+    key:
+      private-key: ${PRIVATE_KEY_ADMIN}
+  sepolia:
+    rpc:
+      url: ${SEPOLIA_RPC_URL}
+  etherscan:
+    api:
+      key: ${ETHERSCAN_API_KEY}
+  web3j:
+    polling-interval: 60000 # 60초 (60000ms)
