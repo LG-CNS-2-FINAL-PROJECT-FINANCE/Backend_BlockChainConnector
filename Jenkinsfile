@@ -117,9 +117,9 @@ pipeline {
                         def imageTag = "${APP_VERSION}"
                         def MANIFEST_REPO = "https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/LG-CNS-2-FINAL-PROJECT-FINANCE/Backend_Manifests.git"
 
-												// master/main 브랜취용 매니페스트 분리
+                        // master/main 브랜취용 매니페스트 분리
                         if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'main'){
-                            MANIFEST_DIR = 'helm_prod'
+                            MANIFEST_DIR = 'helm_chart'
                         }
 
                         sh """
