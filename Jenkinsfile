@@ -119,7 +119,7 @@ pipeline {
 
                         // master/main 브랜취용 매니페스트 분리
                         if (env.BRANCH_NAME == 'master' || env.BRANCH_NAME == 'main'){
-                            MANIFEST_DIR = 'helm_chart'
+                            MANIFEST_DIR = 'helm_prod'
                         }
 
                         sh """
