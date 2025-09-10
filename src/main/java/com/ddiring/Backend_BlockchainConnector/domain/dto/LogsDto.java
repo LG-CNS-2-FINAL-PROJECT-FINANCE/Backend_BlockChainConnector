@@ -32,6 +32,12 @@ public class LogsDto {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Response {
         private List<TransactionLog> result;
+
+        @Getter
+        @Builder
+        @AllArgsConstructor
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
+        public static class TransactionLog {
             @Positive
             Long blockNumber;
             @NotEmpty
@@ -46,5 +52,8 @@ public class LogsDto {
             String toAddress;
             @Positive
             Long value;
+            @NotBlank
+            String transactionType;
+        }
     }
 }
