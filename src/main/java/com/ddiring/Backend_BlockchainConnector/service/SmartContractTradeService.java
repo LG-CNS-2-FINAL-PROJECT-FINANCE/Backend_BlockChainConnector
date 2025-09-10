@@ -215,7 +215,7 @@ public class SmartContractTradeService {
                     }).exceptionally(throwable -> {
                         log.error("[Smart Contract] 토큰 예치 취소 요청 중 에러 발생 : {}", throwable.getMessage());
 
-                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.DEPOSIT)
+                        BlockchainLog depositLog = blockchainLogRepository.findByProjectIdAndOrderIdAndRequestType(cancelDepositDto.getProjectId(), updatedCancelDeposit.getDepositId(), BlockchainRequestType.CANCEL_DEPOSIT)
                                 .orElseGet(() -> {
                                     log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", cancelDepositDto.getProjectId());
                                     throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
