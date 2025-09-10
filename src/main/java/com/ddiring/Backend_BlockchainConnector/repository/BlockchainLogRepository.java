@@ -27,4 +27,6 @@ public interface BlockchainLogRepository extends JpaRepository<BlockchainLog, Lo
     Boolean existsByProjectIdAndOrderIdAndRequestType(@NotBlank  String projectId, Long orderId, BlockchainRequestType requestType);
 
     Boolean existsByProjectIdAndRequestStatus(@NotBlank String projectId, BlockchainRequestStatus requestStatus);
+
+    List<BlockchainLog> findByRequestTransactionHashInOrOracleTransactionHashIn(List<String> requestTransactionHashes, List<String> oracleTransactionHashes);
 }
