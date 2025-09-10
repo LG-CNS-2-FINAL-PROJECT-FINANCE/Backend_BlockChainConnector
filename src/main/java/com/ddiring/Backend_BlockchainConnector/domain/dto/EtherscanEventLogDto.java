@@ -6,6 +6,9 @@ import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.math.BigInteger;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 public class EtherscanEventLogDto {
@@ -72,7 +75,7 @@ public class EtherscanEventLogDto {
 
             private String tokenName;
             private String tokenSymbol;
-            private String tokenDecimal;
+            private Long tokenDecimal;
             private String transactionIndex;
             private String input;
             private Long confirmations;
