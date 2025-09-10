@@ -1,6 +1,7 @@
 package com.ddiring.Backend_BlockchainConnector.service;
 
 import com.ddiring.Backend_BlockchainConnector.common.exception.NotFound;
+import com.ddiring.Backend_BlockchainConnector.config.BlockchainProperties;
 import com.ddiring.Backend_BlockchainConnector.config.JenkinsProperties;
 import com.ddiring.Backend_BlockchainConnector.domain.dto.*;
 import com.ddiring.Backend_BlockchainConnector.domain.entity.BlockchainLog;
@@ -10,6 +11,7 @@ import com.ddiring.Backend_BlockchainConnector.domain.enums.BlockchainRequestTyp
 import com.ddiring.Backend_BlockchainConnector.domain.mapper.BlockchainLogMapper;
 import com.ddiring.Backend_BlockchainConnector.event.producer.KafkaMessageProducer;
 import com.ddiring.Backend_BlockchainConnector.remote.deploy.RemoteJenkinsService;
+import com.ddiring.Backend_BlockchainConnector.remote.log.RemoteEtherscanService;
 import com.ddiring.Backend_BlockchainConnector.repository.BlockchainLogRepository;
 import com.ddiring.Backend_BlockchainConnector.repository.DeploymentRepository;
 import com.ddiring.Backend_BlockchainConnector.service.dto.ContractWrapper;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
@@ -41,8 +44,10 @@ public class SmartContractService {
     private final BlockchainLogRepository blockchainLogRepository;
 
     private final RemoteJenkinsService remoteJenkinsService;
+    private final RemoteEtherscanService remoteEtherscanService;
 
     private final JenkinsProperties jenkinsProperties;
+    private final BlockchainProperties blockchainProperties;
 
     @Transactional
     public void triggerDeploymentPipeline(DeployDto.Request deployRequestDto) {
@@ -278,6 +283,69 @@ public class SmartContractService {
         } catch (Exception e) {
             log.error("[Balance] 예상치 못한 에러 발생 : {}", e.getMessage());
             throw new RuntimeException("[Balance] 예상치 못한 에러 발생 : " + e.getMessage());
+        }
+    }
+
+    public LogsDto.Response getLogs(LogsDto.Request logsDto) {
+        log.info("[스마트 컨트랙트 로그 조회]");
+
+        Deployment deploymennt = deploymentRepository.findByProjectId(logsDto.getProjectId())
+                        .orElseGet(() -> {
+                            log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", logsDto.getProjectId());
+                            throw new NotFound("스마트 컨트랙트를 찾을 수 없습니다.");
+                        });
+
+        try {
+            Long chainId = contractWrapper.getWeb3j().ethChainId().send().getChainId().longValue();
+
+            EtherscanEventLogDto.Request etherscanRequst = EtherscanEventLogDto.of(
+                    logsDto, chainId,
+                    deploymennt.getSmartContractAddress(),
+                    blockchainProperties.getEtherscan().getApi().getKey()
+            );
+            EtherscanEventLogDto.Response etherScanResponse = remoteEtherscanService.getLogsFromEtherScan(
+                    etherscanRequst.getChainId(),
+                    etherscanRequst.getModule(),
+                    etherscanRequst.getAction(),
+                    etherscanRequst.getContractaddress(),
+                    etherscanRequst.getAddress(),
+                    etherscanRequst.getPage(),
+                    etherscanRequst.getOffset(),
+                    etherscanRequst.getStartblock(),
+                    etherscanRequst.getEndblock(),
+                    etherscanRequst.getSort(),
+                    etherscanRequst.getApiKey()
+            );
+
+            log.info("Response Status: {}, Message: {}, Result Size: {}", etherScanResponse.getStatus(), etherScanResponse.getMessage(), etherScanResponse.getResult().size());
+
+            // 트랜잭션 해시 - Request Type 매핑
+            List<String> filterHashList = etherScanResponse.getResult().stream().map(EtherscanEventLogDto.Response.TokenTransaction::getHash).toList();
+            List<BlockchainLog> blockchainLogList = blockchainLogRepository.findByRequestTransactionHashInOrOracleTransactionHashIn(filterHashList, filterHashList);
+            Map<String, BlockchainRequestType> transactionTypeMap = blockchainLogList.stream().collect(Collectors.toMap(
+                    log -> {
+                        String oracleTransactionHash = log.getOracleTransactionHash();
+                        if (oracleTransactionHash == null || oracleTransactionHash.isBlank()) {
+                            return log.getRequestTransactionHash();
+                        } else {
+                            return oracleTransactionHash;
+                        }
+                    },
+                    BlockchainLog::getRequestType,
+                    (existingValue, newValue) -> existingValue
+            ));
+
+            // 응답 DTO 구성
+            Stream<LogsDto.Response.TransactionLog> response = etherScanResponse.getResult().stream().map(transactionLog -> {
+                String transactionType = transactionTypeMap.getOrDefault(transactionLog.getHash(), BlockchainRequestType.ETC).toString();
+
+                return EtherscanEventLogDto.toLogsResponse(transactionLog, transactionType);
+            });
+
+            return LogsDto.Response.builder().result(response.toList()).build();
+        } catch (Exception e) {
+            log.error("[EtherscanLog] 예상치 못한 에러 발생 : {}", e.getMessage());
+            throw new RuntimeException("[EtherscanLog] 예상치 못한 에러 발생 : " + e.getMessage());
         }
     }
 }
