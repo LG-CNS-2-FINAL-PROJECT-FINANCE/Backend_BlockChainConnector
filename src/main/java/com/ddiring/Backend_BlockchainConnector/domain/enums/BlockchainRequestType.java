@@ -8,7 +8,8 @@ public enum BlockchainRequestType {
     INVESTMENT("INVESTMENT"),
     DEPOSIT("DEPOSIT"),
     CANCEL_DEPOSIT("CANCEL_DEPOSIT"),
-    TRADE("TRADE");
+    TRADE("TRADE"),
+    ETC("ETC");
 
     private final String requestType;
 

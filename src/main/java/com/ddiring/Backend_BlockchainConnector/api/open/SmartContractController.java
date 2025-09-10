@@ -50,4 +50,11 @@ public class SmartContractController {
 
         return ApiResponseDto.createOK(response);
     }
+
+    @GetMapping(value = "/logs")
+    public ApiResponseDto<?> getLogs(@ModelAttribute @Valid LogsDto.Request logsDto) {
+        LogsDto.Response response = smartContractService.getLogs(logsDto);
+
+        return ApiResponseDto.createOK(response);
+    }
 }
