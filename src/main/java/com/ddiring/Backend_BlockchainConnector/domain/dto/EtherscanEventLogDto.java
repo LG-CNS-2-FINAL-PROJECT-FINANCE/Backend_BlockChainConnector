@@ -78,3 +78,20 @@ public class EtherscanEventLogDto {
             private Long confirmations;
         }
     }
+
+    public static Request of (LogsDto.Request logsDto, Long chainId, String contractAddress, String apiKey) {
+        return Request.builder()
+                .chainId(chainId)
+                .module("account")
+                .action("tokentx")
+                .contractaddress(contractAddress)
+                .address(logsDto.getUserAddress())
+                .startblock(0L)
+                .endblock(Long.MAX_VALUE)
+                .page(logsDto.getPage())
+                .offset(logsDto.getOffset())
+                .sort(logsDto.getSort())
+                .apiKey(apiKey)
+                .build();
+    }
+}
