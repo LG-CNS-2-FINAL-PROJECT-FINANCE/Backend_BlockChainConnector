@@ -289,6 +289,14 @@ public class SmartContractService {
     public LogsDto.Response getLogs(LogsDto.Request logsDto) {
         log.info("[스마트 컨트랙트 로그 조회]");
 
+        if (logsDto.getPage() <= 0 || logsDto.getOffset() <= 0){
+            throw new IllegalArgumentException("페이지와 오프셋은 0 초과의 값이어야 합니다.");
+        }
+
+        if (!("asc".equalsIgnoreCase(logsDto.getSort()) || "desc".equalsIgnoreCase(logsDto.getSort()))) {
+            throw new IllegalArgumentException("정렬 기준은 'asc' 또는 'desc'이어야 합니다.");
+        }
+
         Deployment deploymennt = deploymentRepository.findByProjectId(logsDto.getProjectId())
                         .orElseGet(() -> {
                             log.error("{}에 해당하는 스마트 컨트랙트를 찾을 수 없습니다.", logsDto.getProjectId());
