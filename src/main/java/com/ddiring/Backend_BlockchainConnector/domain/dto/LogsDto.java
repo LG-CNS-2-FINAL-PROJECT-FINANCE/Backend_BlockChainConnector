@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class LogsDto {
     @Getter
@@ -30,6 +31,7 @@ public class LogsDto {
     @AllArgsConstructor
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Response {
+        private List<TransactionLog> result;
             @Positive
             Long blockNumber;
             @NotEmpty
