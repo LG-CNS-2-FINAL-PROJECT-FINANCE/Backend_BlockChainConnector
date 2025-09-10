@@ -97,4 +97,20 @@ public class EtherscanEventLogDto {
                 .apiKey(apiKey)
                 .build();
     }
+
+    public static LogsDto.Response.TransactionLog toLogsResponse(Response.TokenTransaction tokenTransaction, String transactionType) {
+        LocalDateTime transactionTime = Instant.ofEpochSecond(tokenTransaction.getTimeStamp()).atZone(ZoneId.of("UTC")).toLocalDateTime();
+        Long value = tokenTransaction.getValue().divide(BigInteger.TEN.pow(tokenTransaction.getTokenDecimal().intValue())).longValue();
+
+        return LogsDto.Response.TransactionLog.builder()
+                .blockNumber(tokenTransaction.getBlockNumber())
+                .timeStamp(transactionTime)
+                .transactionHash(tokenTransaction.getHash())
+                .fromAddress(tokenTransaction.getFrom())
+                .contractAddress(tokenTransaction.getContractAddress())
+                .toAddress(tokenTransaction.getTo())
+                .value(value)
+                .transactionType(transactionType)
+                .build();
+    }
 }
